@@ -483,14 +483,14 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   <div class="name-wrap">
     <div class="label kicker">Annotator check-in</div>
     <h1>Who's at the bench?</h1>
-    <p>Twenty-four real specimen patches — pathology nuclei and dermoscopy lesions — each already roughly segmented by an automatic model. Correct the boundary back toward the truth with the brush and lasso. Speed and accuracy both score.</p>
+    <p>Twenty-four real specimen patches, pathology nuclei and dermoscopy lesions, each already roughly segmented by an automatic model. Correct the boundary back toward the truth with the brush or lasso. Speed and accuracy both score.</p>
     <input type="text" id="name-input" placeholder="Type your name" maxlength="30" />
     <div class="rules-card">
       <div class="label">How scoring works</div>
       <dl>
         <dt>Match</dt><dd>Overlap (Dice) between your corrected mask and the real ground truth.</dd>
-        <dt>Speed</dt><dd>A bonus that fades out after about 90 seconds on a patch — careful beats frantic, but don't stall.</dd>
-        <dt>Streak</dt><dd>Consecutive clean matches (&ge;85%) build a streak; a rough one resets it.</dd>
+        <dt>Speed</dt><dd>A bonus that fades out after about 90 seconds on a patch. Careful beats frantic, but don't stall.</dd>
+        <dt>Streak</dt><dd>Consecutive clean matches (&ge;85%) build a streak. A rough one resets it.</dd>
       </dl>
     </div>
     <button class="primary" id="start-btn" disabled>Start the run</button>
@@ -501,9 +501,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   <div class="name-wrap">
     <div class="label kicker">Before you begin</div>
     <h1>What you'll be looking at</h1>
-    <p>Two quick examples of the raw photos in this bench &mdash; no markings, just what the tissue/lesion actually looks like. In the real task, each photo already has a rough boundary drawn on it by an automatic model; your job is to correct that boundary with the brush and lasso tools, not draw one from scratch.</p>
+    <p>Two quick examples of the raw photos in this bench, no markings, just what the tissue/lesion actually looks like. In the real task, each photo already has a rough boundary drawn on it by an automatic model. Your job is to correct that boundary with the brush or lasso tools, not draw one from scratch.</p>
     <div class="tutorial-examples" id="tutorial-examples"></div>
-    <p>Take your time to look at the texture and edges here &mdash; the real patches are the same size and quality as what you see now. When a patch loads for real, look for where the drawn boundary doesn't match the true edge of the nucleus or lesion, and correct just that.</p>
+    <p>Take your time to look at the texture and edges here. The real patches are the same size and quality as what you see now. When a patch loads for real, look for where the drawn boundary doesn't match the true edge of the nucleus or lesion, and correct just that.</p>
     <button class="primary" id="tutorial-continue-btn">Got it, continue &rarr;</button>
   </div>
 </div>
@@ -512,7 +512,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   <div class="name-wrap">
     <div class="label kicker">Before you start</div>
     <h1>A few quick questions</h1>
-    <p>No wrong answers &mdash; this just helps us interpret the scores afterward.</p>
+    <p>No wrong answers, this just helps us interpret the scores afterward.</p>
 
     <div class="survey-q">
       <div class="label">What is your professional or academic background?</div>
@@ -599,7 +599,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 <div class="screen" id="screen-postsurvey">
   <div class="name-wrap">
     <div class="label kicker">Bench closed</div>
-    <h1>Before your results &mdash; how was it?</h1>
+    <h1>Before your results, how was it?</h1>
     <p>These help us design the scoring/gamification side better for real medical annotation work. Optional question is really optional.</p>
 
     <div class="survey-q">
@@ -744,7 +744,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     </div>
 
     <div class="survey-q">
-      <div class="label">Optional &mdash; any other thoughts on the task?</div>
+      <div class="label">Optional: any other thoughts on the task?</div>
       <textarea id="postsurvey-feedback" rows="3" placeholder="Optional"></textarea>
     </div>
 
@@ -779,7 +779,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   <div class="name-wrap">
     <div class="label kicker" id="block-intro-kicker">Block 1 of 2</div>
     <h1 id="block-intro-title">Work carefully</h1>
-    <p id="block-intro-text">Take your time. Aim for the most accurate boundary you can manage — there's no time limit.</p>
+    <p id="block-intro-text">Take your time. Aim for the most accurate boundary you can manage. There's no time limit.</p>
     <button class="primary" id="block-begin-btn">Begin block &rarr;</button>
   </div>
 </div>
@@ -861,7 +861,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     <div class="label kicker">Bench closed</div>
     <div class="summary-score">
       <span class="big" id="summary-points">0</span>
-      <span class="label">total points &mdash; <span id="summary-name"></span></span>
+      <span class="label">total points, <span id="summary-name"></span></span>
     </div>
     <div class="stat-row">
       <div class="stat-box"><div class="label">Avg match</div><div class="v" id="summary-avg-dice">&mdash;</div></div>
@@ -899,7 +899,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   <div class="board-wrap">
     <div class="label kicker">Group reveal</div>
     <h1 style="font-family:var(--mono); font-size:26px;">Load everyone's results</h1>
-    <p style="color:var(--ink-soft); font-size:14px; max-width:60ch;">Each annotator downloads a results file when their run ends. Drop every file you've collected here &mdash; nothing leaves this page, it's all read locally in your browser.</p>
+    <p style="color:var(--ink-soft); font-size:14px; max-width:60ch;">Each annotator downloads a results file when their run ends. Drop every file you've collected here. Nothing leaves this page, it's all read locally in your browser.</p>
     <div class="dropzone" id="dropzone">
       <div>Drop <span class="mono">.json</span> result files here, or click to choose</div>
       <input type="file" id="file-input" accept="application/json" multiple style="display:none;" />
@@ -957,7 +957,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     careful: {
       kicker: "Work carefully",
       title: "Work carefully",
-      text: "Take your time. Aim for the most accurate boundary you can manage — there's no time limit."
+      text: "Take your time. Aim for the most accurate boundary you can manage. There's no time limit."
     },
     rushed: {
       kicker: "Work quickly",
@@ -1093,7 +1093,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     var feedbackBlock = $("postsurvey-feedback");
     if (feedbackBlock) {
       var feedbackLabel = feedbackBlock.parentElement.querySelector(".label");
-      if (feedbackLabel) feedbackLabel.textContent = "Optional — any other thoughts on the task?";
+      if (feedbackLabel) feedbackLabel.textContent = "Optional: any other thoughts on the task?";
     }
     var nameScreenIntro = document.querySelector("#screen-name p");
     if (nameScreenIntro) {
@@ -1580,7 +1580,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       var badgeRow = $("summary-badges");
       badgeRow.innerHTML = "";
       if (state.badges.length === 0) {
-        badgeRow.innerHTML = '<span class="empty-note">None this run &mdash; try a faster, cleaner pass next time.</span>';
+        badgeRow.innerHTML = '<span class="empty-note">None this run. Try a faster, cleaner pass next time.</span>';
       }
       state.badges.forEach(function (b) {
         var chip = document.createElement("div");
