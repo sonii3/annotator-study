@@ -150,7 +150,7 @@ input[type="text"]:focus-visible { outline: 2px solid var(--accent); outline-off
 
 /* ---------- name screen ---------- */
 .name-wrap {
-  max-width: 480px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 72px 24px 40px;
   display: flex;
@@ -786,8 +786,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 
 <div class="screen" id="screen-annotate">
   <div class="hud">
-    <div class="hud-stat"><span class="label">Annotator</span><span class="v mono" id="hud-name">&mdash;</span></div>
-    <div class="hud-stat"><span class="label">Mode</span><span class="v mode-pill" id="hud-mode">&mdash;</span></div>
+    <div class="hud-stat"><span class="label">Annotator</span><span class="v mono" id="hud-name">-/span></div>
+    <div class="hud-stat"><span class="label">Mode</span><span class="v mode-pill" id="hud-mode">-/span></div>
     <div class="hud-stat"><span class="label">Points</span><span class="v" id="hud-points">0</span></div>
     <div class="hud-stat"><span class="label">Streak</span><span class="v" id="hud-streak">0</span></div>
     <div class="hud-stat"><span class="label">Elapsed</span><span class="v" id="hud-timer">0.0s</span></div>
@@ -864,9 +864,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       <span class="label">total points, <span id="summary-name"></span></span>
     </div>
     <div class="stat-row">
-      <div class="stat-box"><div class="label">Avg match</div><div class="v" id="summary-avg-dice">&mdash;</div></div>
-      <div class="stat-box"><div class="label">Best streak</div><div class="v" id="summary-best-streak">&mdash;</div></div>
-      <div class="stat-box"><div class="label">Total time</div><div class="v" id="summary-total-time">&mdash;</div></div>
+      <div class="stat-box"><div class="label">Avg match</div><div class="v" id="summary-avg-dice">-/div></div>
+      <div class="stat-box"><div class="label">Best streak</div><div class="v" id="summary-best-streak">-/div></div>
+      <div class="stat-box"><div class="label">Total time</div><div class="v" id="summary-total-time">-/div></div>
     </div>
     <div>
       <div class="label" style="margin-bottom:8px;">Badges earned</div>
