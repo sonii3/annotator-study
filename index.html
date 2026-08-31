@@ -71,7 +71,7 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--serif);
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.5;
   min-height: 100vh;
   overflow-x: hidden;
@@ -306,7 +306,8 @@ input[type="text"]:focus-visible { outline: 2px solid var(--accent); outline-off
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 6px;
+  padding: 10px 8px;
+  font-size: 15px;
 }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button.on {
@@ -314,12 +315,16 @@ input[type="text"]:focus-visible { outline: 2px solid var(--accent); outline-off
   color: var(--accent-contrast);
 }
 .seg svg { width: 15px; height: 15px; }
-.seg.wrap { flex-wrap: wrap; }
-.seg.wrap button { flex: 1 1 auto; min-width: 90px; white-space: nowrap; }
-.seg.wrap button + button { border-left: 1px solid var(--line); }
+/* Each option gets its own full-width row, stacked, rather than
+   wrapping into a ragged multi-column grid where some rows have one
+   button and others have three. Every label then always has the full
+   row to itself, so it fits on one line regardless of length. */
+.seg.wrap { flex-direction: column; }
+.seg.wrap button { flex: 1 1 auto; justify-content: flex-start; text-align: left; white-space: normal; }
+.seg.wrap button + button { border-left: none; border-top: 1px solid var(--line); }
 
 .survey-q { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
-.survey-q .label { font-family: var(--serif); font-size: 14px; text-transform: none; letter-spacing: normal; color: var(--ink); }
+.survey-q .label { font-family: var(--serif); font-size: 16px; text-transform: none; letter-spacing: normal; color: var(--ink); }
 textarea {
   font-family: var(--serif);
   font-size: 15px;
@@ -786,8 +791,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 
 <div class="screen" id="screen-annotate">
   <div class="hud">
-    <div class="hud-stat"><span class="label">Annotator</span><span class="v mono" id="hud-name">-/span></div>
-    <div class="hud-stat"><span class="label">Mode</span><span class="v mode-pill" id="hud-mode">-/span></div>
+    <div class="hud-stat"><span class="label">Annotator</span><span class="v mono" id="hud-name">-</span></div>
+    <div class="hud-stat"><span class="label">Mode</span><span class="v mode-pill" id="hud-mode">-</span></div>
     <div class="hud-stat"><span class="label">Points</span><span class="v" id="hud-points">0</span></div>
     <div class="hud-stat"><span class="label">Streak</span><span class="v" id="hud-streak">0</span></div>
     <div class="hud-stat"><span class="label">Elapsed</span><span class="v" id="hud-timer">0.0s</span></div>
@@ -864,9 +869,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       <span class="label">total points, <span id="summary-name"></span></span>
     </div>
     <div class="stat-row">
-      <div class="stat-box"><div class="label">Avg match</div><div class="v" id="summary-avg-dice">-/div></div>
-      <div class="stat-box"><div class="label">Best streak</div><div class="v" id="summary-best-streak">-/div></div>
-      <div class="stat-box"><div class="label">Total time</div><div class="v" id="summary-total-time">-/div></div>
+      <div class="stat-box"><div class="label">Avg match</div><div class="v" id="summary-avg-dice">-</div></div>
+      <div class="stat-box"><div class="label">Best streak</div><div class="v" id="summary-best-streak">-</div></div>
+      <div class="stat-box"><div class="label">Total time</div><div class="v" id="summary-total-time">-</div></div>
     </div>
     <div>
       <div class="label" style="margin-bottom:8px;">Badges earned</div>
