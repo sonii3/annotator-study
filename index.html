@@ -555,6 +555,24 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       </div>
     </div>
 
+    <div class="survey-q">
+      <div class="label">Do you have formal training in reading histopathology or dermoscopy images (medical, biology, or similar background)?</div>
+      <div class="seg" data-question="domainTraining">
+        <button data-value="yes">Yes</button>
+        <button data-value="somewhat">Some coursework/exposure</button>
+        <button data-value="no">No</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">What are you using to correct masks right now?</div>
+      <div class="seg wrap" data-question="inputDevice">
+        <button data-value="mouse">Mouse</button>
+        <button data-value="trackpad">Trackpad</button>
+        <button data-value="stylus">Touchscreen/stylus</button>
+      </div>
+    </div>
+
     <button class="primary" id="presurvey-continue-btn" disabled>Continue to bench &rarr;</button>
   </div>
 </div>
@@ -627,7 +645,34 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     </div>
 
     <div class="survey-q">
-      <div class="label">Optional &mdash; any thoughts on using game elements (points/streaks/badges) for a real medical-image annotation task?</div>
+      <div class="label">Did you actually work differently between the "careful" block and the "rushed" block?</div>
+      <div class="seg wrap" data-question="manipulationCheck">
+        <button data-value="clearly">Yes, clearly different pace/attention</button>
+        <button data-value="somewhat">Somewhat different</button>
+        <button data-value="barely">Not really, they felt similar</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">Which of your two blocks do you think came out more accurate overall?</div>
+      <div class="seg wrap" data-question="selfComparison">
+        <button data-value="careful">The careful block</button>
+        <button data-value="rushed">The rushed block</button>
+        <button data-value="same">About the same</button>
+        <button data-value="unsure">Not sure</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">Did you run into any technical issues while correcting masks (lag, misclicks, accidental submits)?</div>
+      <div class="seg" data-question="technicalIssues">
+        <button data-value="yes">Yes</button>
+        <button data-value="no">No</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">Optional &mdash; any other thoughts on the task?</div>
       <textarea id="postsurvey-feedback" rows="3" placeholder="Optional"></textarea>
     </div>
 
