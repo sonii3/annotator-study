@@ -1,9 +1,15 @@
 # Annotator Study — Specimen Bench
 
 `index.html` is a self-contained, single-file build of the Specimen Bench
-annotator tool. It needs no backend at all, that is the point of hosting it
-here on GitHub Pages: it does not depend on any university VM or server
-access.
+annotator tool, built with `--no-gamification`. It needs no backend at all,
+that is the point of hosting it here on GitHub Pages: it does not depend on
+any university VM or server access.
+
+This is the plain, non-gamified build used for the real q_softmin
+validation study: no points, streaks, badges, or leaderboard, so the
+careful-vs-rushed effort manipulation isn't confounded by visible game
+feedback. Gamification itself is reserved for a separate, later paper and
+tool build.
 
 ## What it does, and does not, do
 
@@ -16,7 +22,7 @@ annotator gets two buttons:
 - **Email my results to the researcher** — downloads that same file, then
   opens the annotator's own email app with `sonja.kunzmann@fau.de`, a
   subject line, and a short human-readable summary (name, session ID,
-  timestamp, points, average match) already filled in. `mailto:` links
+  timestamp, patches completed, average match) already filled in. `mailto:` links
   cannot attach a file themselves (no browser allows that, for security
   reasons), so the on-page hint tells the annotator to attach the
   just-downloaded file by hand before hitting send in their email client.
