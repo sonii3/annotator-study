@@ -71,7 +71,7 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--serif);
-  font-size: 17px;
+  font-size: 19px;
   line-height: 1.5;
   min-height: 100vh;
   overflow-x: hidden;
@@ -96,7 +96,7 @@ button {
   color: var(--ink);
   border-radius: 3px;
   padding: 9px 16px;
-  font-size: 13px;
+  font-size: 15px;
   letter-spacing: 0.03em;
   transition: background 0.12s ease, border-color 0.12s ease, transform 0.06s ease;
 }
@@ -113,7 +113,7 @@ button.primary:hover { filter: brightness(1.08); }
 button:disabled { opacity: 0.4; cursor: not-allowed; }
 input[type="text"] {
   font-family: var(--serif);
-  font-size: 16px;
+  font-size: 18px;
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 3px;
@@ -159,12 +159,15 @@ input[type="text"]:focus-visible { outline: 2px solid var(--accent); outline-off
 }
 .name-wrap .kicker { font-size: 12px; }
 .name-wrap h1 { font-size: 30px; font-family: var(--mono); letter-spacing: -0.01em; }
-.name-wrap p { color: var(--ink-soft); font-size: 15px; max-width: 65ch; }
+.name-wrap p { color: var(--ink-soft); font-size: 17px; max-width: 65ch; }
 .tutorial-examples {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
+  max-width: 520px;
+  margin: 0 auto;
 }
+#screen-tutorial .name-wrap p { max-width: none; }
 .tutorial-example figure {
   margin: 0;
   border: 1px solid var(--line);
@@ -307,7 +310,7 @@ input[type="text"]:focus-visible { outline: 2px solid var(--accent); outline-off
   justify-content: center;
   gap: 6px;
   padding: 10px 8px;
-  font-size: 15px;
+  font-size: 16px;
 }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button.on {
@@ -324,10 +327,10 @@ input[type="text"]:focus-visible { outline: 2px solid var(--accent); outline-off
 .seg.wrap button + button { border-left: none; border-top: 1px solid var(--line); }
 
 .survey-q { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
-.survey-q .label { font-family: var(--serif); font-size: 16px; text-transform: none; letter-spacing: normal; color: var(--ink); }
+.survey-q .label { font-family: var(--serif); font-size: 17px; text-transform: none; letter-spacing: normal; color: var(--ink); }
 textarea {
   font-family: var(--serif);
-  font-size: 15px;
+  font-size: 17px;
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 3px;
@@ -339,7 +342,7 @@ textarea {
 textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 input[type="range"] { width: 100%; accent-color: var(--accent); }
 .size-readout { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-soft); }
-.submit-btn { width: 100%; padding: 12px; font-size: 13px; }
+.submit-btn { width: 100%; padding: 12px; font-size: 15px; }
 .undo-row { display: flex; gap: 6px; }
 .undo-row button { flex: 1; }
 
@@ -427,7 +430,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   font-size: 12px;
 }
 .badge-chip svg { width: 13px; height: 13px; }
-.per-patch-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.per-patch-table { width: 100%; border-collapse: collapse; font-size: 15px; }
 .per-patch-table th, .per-patch-table td {
   text-align: left;
   padding: 7px 10px;
