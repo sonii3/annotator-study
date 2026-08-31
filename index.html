@@ -515,6 +515,16 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     <p>No wrong answers &mdash; this just helps us interpret the scores afterward.</p>
 
     <div class="survey-q">
+      <div class="label">What is your professional or academic background?</div>
+      <div class="seg wrap" data-question="background">
+        <button data-value="medicine-biology">Medicine/Biology</button>
+        <button data-value="cs-engineering">Computer Science/Engineering</button>
+        <button data-value="other-stem">Other natural sciences</button>
+        <button data-value="other">Other</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
       <div class="label">Years of experience annotating or analyzing biomedical images (histopathology, dermoscopy, or similar)?</div>
       <div class="seg wrap" data-question="experience">
         <button data-value="none">None</button>
@@ -700,11 +710,68 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     </div>
 
     <div class="survey-q">
+      <div class="label">Which factors do you think should count most when judging the quality of an annotator's work? (choose all that apply)</div>
+      <div class="seg wrap multi" data-question="rankFactors">
+        <button data-value="accuracy">Accuracy/precision</button>
+        <button data-value="speed">Speed</button>
+        <button data-value="consistency">Consistency across patches</button>
+        <button data-value="expertise">Domain expertise</button>
+        <button data-value="edgeCases">Attention to edge cases</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">Which kind of feedback would help you improve your annotation skills? (choose all that apply)</div>
+      <div class="seg wrap multi" data-question="helpfulFeedback">
+        <button data-value="expertBoundary">Seeing the expert/correct boundary afterward</button>
+        <button data-value="numericScore">A numeric accuracy score</button>
+        <button data-value="peerComparison">Comparison to other annotators</button>
+        <button data-value="writtenTips">Written expert tips</button>
+        <button data-value="none">No feedback needed</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">Which factors motivate you to participate in annotation tasks like this one? (choose all that apply)</div>
+      <div class="seg wrap multi" data-question="motivationFactors">
+        <button data-value="research">Contributing to research</button>
+        <button data-value="curiosity">Curiosity about the topic</button>
+        <button data-value="skillBuilding">Building my own skills</button>
+        <button data-value="compensation">Compensation/rewards</button>
+        <button data-value="funGameLike">Fun/game-like elements</button>
+        <button data-value="askedByColleague">Being asked by a colleague/supervisor</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
       <div class="label">Optional &mdash; any other thoughts on the task?</div>
       <textarea id="postsurvey-feedback" rows="3" placeholder="Optional"></textarea>
     </div>
 
     <button class="primary" id="postsurvey-continue-btn" disabled>See my results &rarr;</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-futuresurvey">
+  <div class="name-wrap">
+    <div class="label kicker">One more thing</div>
+    <h1>For a future version of this task</h1>
+    <p>This task didn't use points, badges, or a leaderboard. We're considering them for a separate future study, and your honest preference helps design that, it has no effect on the results you just submitted.</p>
+
+    <div class="survey-q">
+      <div class="label">If a future version of this task included game elements, which would you find most engaging? (choose all that apply)</div>
+      <div class="seg wrap multi" data-question="gamificationPreference">
+        <button data-value="points">Points/score</button>
+        <button data-value="progressBar">A progress bar</button>
+        <button data-value="streaks">Streaks</button>
+        <button data-value="badges">Badges/achievements</button>
+        <button data-value="leaderboard">Leaderboard/ranking against others</button>
+        <button data-value="timeChallenge">Time challenges</button>
+        <button data-value="none">None of these appeal to me</button>
+      </div>
+    </div>
+
+    <button class="primary" id="futuresurvey-continue-btn" disabled>See my results &rarr;</button>
   </div>
 </div>
 
@@ -927,7 +994,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     undoStack: [],
     gtData: null,
     preSurvey: {},
-    postSurvey: {}
+    postSurvey: {},
+    futureSurvey: {}
   };
 
   // Generic handler for any .seg[data-question] button group inside a
@@ -941,11 +1009,25 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   function bindSurveyQuestions(rootEl, getAnswersObj, onChange) {
     rootEl.querySelectorAll(".seg[data-question]").forEach(function (group) {
       var question = group.getAttribute("data-question");
+      var multi = group.classList.contains("multi");
+      if (multi) getAnswersObj()[question] = [];
       group.querySelectorAll("button").forEach(function (b) {
         b.addEventListener("click", function () {
-          group.querySelectorAll("button").forEach(function (x) { x.classList.remove("on"); });
-          b.classList.add("on");
-          getAnswersObj()[question] = b.getAttribute("data-value");
+          if (multi) {
+            // Checkbox-style: each button toggles independently, answer is
+            // an array of selected values, order-preserving, no duplicates.
+            b.classList.toggle("on");
+            var val = b.getAttribute("data-value");
+            var arr = getAnswersObj()[question] || [];
+            var idx = arr.indexOf(val);
+            if (b.classList.contains("on") && idx === -1) arr.push(val);
+            if (!b.classList.contains("on") && idx !== -1) arr.splice(idx, 1);
+            getAnswersObj()[question] = arr;
+          } else {
+            group.querySelectorAll("button").forEach(function (x) { x.classList.remove("on"); });
+            b.classList.add("on");
+            getAnswersObj()[question] = b.getAttribute("data-value");
+          }
           if (onChange) onChange();
         });
       });
@@ -954,7 +1036,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   function allSurveyQuestionsAnswered(rootEl, answersObj) {
     var groups = rootEl.querySelectorAll(".seg[data-question]");
     for (var i = 0; i < groups.length; i++) {
-      if (!answersObj[groups[i].getAttribute("data-question")]) return false;
+      var val = answersObj[groups[i].getAttribute("data-question")];
+      var empty = Array.isArray(val) ? val.length === 0 : !val;
+      if (empty) return false;
     }
     return true;
   }
@@ -1456,6 +1540,20 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   });
   $("postsurvey-continue-btn").addEventListener("click", function () {
     state.postSurvey.feedback = $("postsurvey-feedback").value.trim();
+    state.futureSurvey = {};
+    $("futuresurvey-continue-btn").disabled = true;
+    showScreen("screen-futuresurvey");
+  });
+
+  // Deliberately its own screen, shown only after the real task and its
+  // evaluation are already locked in, and framed as forward-looking (for a
+  // separate future study), so asking about gamification preferences here
+  // cannot retroactively influence the just-completed, non-gamified task.
+  var futuresurveyRoot = $("screen-futuresurvey");
+  bindSurveyQuestions(futuresurveyRoot, function () { return state.futureSurvey; }, function () {
+    $("futuresurvey-continue-btn").disabled = !allSurveyQuestionsAnswered(futuresurveyRoot, state.futureSurvey);
+  });
+  $("futuresurvey-continue-btn").addEventListener("click", function () {
     showSummary();
   });
 
@@ -1520,7 +1618,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       patchesCompleted: state.results.length,
       perPatch: state.results,
       preSurvey: state.preSurvey,
-      postSurvey: state.postSurvey
+      postSurvey: state.postSurvey,
+      futureSurvey: state.futureSurvey
     };
   }
 
@@ -1637,6 +1736,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   $("restart-btn").addEventListener("click", function () {
     resetSurveyUI(presurveyRoot, "presurvey-continue-btn");
     resetSurveyUI(postsurveyRoot, "postsurvey-continue-btn");
+    resetSurveyUI(futuresurveyRoot, "futuresurvey-continue-btn");
     showScreen("screen-name");
   });
   $("nav-to-board-1").addEventListener("click", function () { showScreen("screen-board"); });
