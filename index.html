@@ -746,7 +746,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       <button id="restart-btn">Run again</button>
     </div>
     <div class="label" id="email-hint" style="display:none; margin-top:8px; max-width:60ch;">
-      This downloaded a file named like <span class="mono">specimen-bench-....json</span> and opened your email app with the address and a summary filled in. Before you hit send: 1) attach that downloaded file, it's in your Downloads folder, 2) then send the email. Email itself cannot attach the file automatically, that step is on you.
+      This downloaded a file named like <span class="mono">annotator-study-....json</span> and opened your email app with the address and a summary filled in. Before you hit send: 1) attach that downloaded file, it's in your Downloads folder, 2) then send the email. Email itself cannot attach the file automatically, that step is on you.
     </div>
   </div>
 </div>
@@ -1490,7 +1490,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   }
 
   function resultFilename() {
-    return "specimen-bench-" + state.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".json";
+    return "annotator-study-" + state.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".json";
   }
 
   // Shared by the plain download button and the email button below, so
@@ -1528,24 +1528,24 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   var RESEARCHER_EMAIL = "sonja.kunzmann@fau.de";
   $("email-btn").addEventListener("click", function () {
     var payload = downloadResultsFile();
-    var subject = "Specimen Bench Ergebnisse – " + state.name + " – " + state.sessionUid.slice(0, 8);
+    var subject = "Annotator Study Results – " + state.name + " – " + state.sessionUid.slice(0, 8);
     var bodyLines = [
-      "Hallo Sonja,",
+      "Hi Sonja,",
       "",
-      "anbei meine Specimen-Bench-Ergebnisse.",
+      "here are my annotator study results.",
       "",
-      "Bitte vor dem Senden:",
-      "1. Die gerade heruntergeladene Datei " + resultFilename() + " an diese E-Mail anhaengen (liegt im Download-Ordner).",
-      "2. Diese E-Mail absenden.",
+      "Before sending, please:",
+      "1. Attach the file " + resultFilename() + " that was just downloaded (it's in your Downloads folder) to this email.",
+      "2. Send this email.",
       "",
-      "Zusammenfassung:",
+      "Summary:",
       "Name: " + state.name,
       "Session: " + state.sessionUid,
-      "Zeitpunkt: " + new Date().toISOString(),
-      "Patches abgeschlossen: " + state.results.length
+      "Timestamp: " + new Date().toISOString(),
+      "Patches completed: " + state.results.length
     ];
-    if (GAMIFIED) bodyLines.push("Gesamtpunkte: " + state.points);
-    bodyLines.push("Durchschnittlicher Match: " + fmtPct(payload.avgDice), "", "Danke!");
+    if (GAMIFIED) bodyLines.push("Total points: " + state.points);
+    bodyLines.push("Average match: " + fmtPct(payload.avgDice), "", "Thanks!");
     var mailto = "mailto:" + encodeURIComponent(RESEARCHER_EMAIL) +
       "?subject=" + encodeURIComponent(subject) +
       "&body=" + encodeURIComponent(bodyLines.join("\n"));
