@@ -512,7 +512,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   <div class="name-wrap">
     <div class="label kicker">Before you start</div>
     <h1>A few quick questions</h1>
-    <p>Thirty seconds, no wrong answers &mdash; this just helps us interpret the scores afterward.</p>
+    <p>No wrong answers &mdash; this just helps us interpret the scores afterward.</p>
 
     <div class="survey-q">
       <div class="label">Years of experience annotating or analyzing biomedical images (histopathology, dermoscopy, or similar)?</div>
@@ -570,6 +570,15 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
         <button data-value="mouse">Mouse</button>
         <button data-value="trackpad">Trackpad</button>
         <button data-value="stylus">Touchscreen/stylus</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">Do you have any diagnosed color vision deficiency?</div>
+      <div class="seg" data-question="colorVision">
+        <button data-value="yes">Yes</button>
+        <button data-value="no">No</button>
+        <button data-value="unsure">Not sure</button>
       </div>
     </div>
 
@@ -668,6 +677,25 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       <div class="seg" data-question="technicalIssues">
         <button data-value="yes">Yes</button>
         <button data-value="no">No</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">Which type of boundary error did you find hardest to notice or fix with confidence?</div>
+      <div class="seg wrap" data-question="hardestErrorType">
+        <button data-value="erosion">Mask too small (missing part of the object)</button>
+        <button data-value="dilation">Mask too large (spilling past the true edge)</button>
+        <button data-value="jitter">Jagged/uneven boundary</button>
+        <button data-value="missing">Whole regions missing</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">Did you typically review your correction before submitting, or submit as soon as it looked roughly right?</div>
+      <div class="seg wrap" data-question="reviewBehavior">
+        <button data-value="always">Always reviewed carefully</button>
+        <button data-value="sometimes">Sometimes reviewed</button>
+        <button data-value="rarely">Submitted as soon as it looked right</button>
       </div>
     </div>
 
@@ -950,6 +978,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     });
     var boardScreen = $("screen-board");
     if (boardScreen) boardScreen.remove();
+    var rulesCard = document.querySelector(".rules-card");
+    if (rulesCard) rulesCard.remove();
     var streakBadge = $("streak-badge");
     if (streakBadge) streakBadge.remove();
     document.querySelectorAll(".hud-stat").forEach(function (el) {
