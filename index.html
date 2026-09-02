@@ -869,6 +869,11 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
         </div>
       </div>
 
+      <div class="tool-group">
+        <button id="hint-btn" disabled>Load automated mask</button>
+        <div class="size-readout"><span>Not able to annotate on your own? Load a rough automated mask and adjust it instead. This is recorded.</span></div>
+      </div>
+
       <button class="primary submit-btn" id="submit-btn">Submit patch &rarr;</button>
     </div>
   </div>
@@ -897,7 +902,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     <div>
       <div class="label" style="margin-bottom:8px;">Specimen by specimen</div>
       <table class="per-patch-table">
-        <thead><tr><th>#</th><th>Set</th><th>Mode</th><th>Match</th><th>Time</th><th>Points</th></tr></thead>
+        <thead><tr><th>#</th><th>Set</th><th>Mode</th><th>Match</th><th>Time</th><th>Hint</th><th>Points</th></tr></thead>
         <tbody id="summary-table-body"></tbody>
       </table>
     </div>
@@ -1015,6 +1020,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     lassoPts: [],
     undoStack: [],
     gtData: null,
+    usedHint: false,
     preSurvey: {},
     postSurvey: {},
     futureSurvey: {}
@@ -1268,6 +1274,18 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     return bin;
   }
 
+  function paintMaskFromBinary(bin) {
+    var img = maskCtx.createImageData(W, H);
+    for (var i = 0; i < W * H; i++) {
+      var on = bin[i] === 1;
+      img.data[i * 4] = 91;
+      img.data[i * 4 + 1] = 53;
+      img.data[i * 4 + 2] = 104;
+      img.data[i * 4 + 3] = on ? MASK_ALPHA : 0;
+    }
+    maskCtx.putImageData(img, 0, 0);
+  }
+
   function currentMaskBinary() {
     var data = maskCtx.getImageData(0, 0, W, H).data;
     var bin = new Uint8Array(W * H);
@@ -1303,6 +1321,12 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   $("reset-btn").addEventListener("click", function () {
     pushUndo();
     maskCtx.clearRect(0, 0, W, H);
+  });
+  $("hint-btn").addEventListener("click", function () {
+    if (!state.candidateBin) return;
+    pushUndo();
+    paintMaskFromBinary(state.candidateBin);
+    state.usedHint = true;
   });
 
   // ---------------- drawing ----------------
@@ -1409,6 +1433,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     state.gtData = null;
     state.candidateBin = null;
     state.startDice = null;
+    state.usedHint = false;
+    $("hint-btn").disabled = true;
     function maybeComputeStartDice() {
       if (state.gtData && state.candidateBin) {
         state.startDice = diceScore(state.candidateBin, state.gtData);
@@ -1417,15 +1443,17 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 
     loadImageToCanvas(p.image, imgCtx);
     // The annotator draws from a blank canvas, not a corrected candidate --
-    // the automatic model's candidate mask is still loaded here, but only
-    // off-screen, so state.startDice (the candidate's own Dice vs GT) can be
-    // exported as a hidden human-vs-automatic comparison point, never shown
-    // or painted onto the visible mask.
+    // the automatic model's candidate mask is loaded here off-screen, both
+    // so state.startDice (the candidate's own Dice vs GT) can be exported
+    // as a hidden human-vs-automatic comparison point, and so hint-btn can
+    // load it onto the visible mask on request (state.usedHint tracks this
+    // per patch and is exported alongside the result, see submit-btn).
     maskCtx.clearRect(0, 0, W, H);
     var offCand = document.createElement("canvas");
     offCand.width = W; offCand.height = H;
     loadImageToCanvas(p.candidate, offCand.getContext("2d"), function (im) {
       state.candidateBin = binaryMaskFromImage(im);
+      $("hint-btn").disabled = false;
       maybeComputeStartDice();
     });
 
@@ -1519,6 +1547,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     state.results.push({
       id: p.id, dataset: p.dataset, condition: condition,
       dice: dice, startDice: startDice, seconds: seconds, points: pts,
+      usedHint: state.usedHint,
       maskPng: maskBinaryToDataUri(mine)
     });
 
@@ -1588,7 +1617,13 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   function showSummary() {
     clearInterval(state.timerHandle);
     showScreen("screen-summary");
-    $("summary-name").textContent = state.name;
+    // summary-name lives inside .summary-score, which applyGamificationMode()
+    // removes entirely for non-gamified builds (it's the points display) --
+    // guarded so a non-gamified run doesn't throw here and abort the rest of
+    // this function (avg-dice/total-time/per-patch table/submitToServer all
+    // come after this line).
+    var summaryNameEl = $("summary-name");
+    if (summaryNameEl) summaryNameEl.textContent = state.name;
     var avgDice = state.results.reduce(function (s, r) { return s + r.dice; }, 0) / state.results.length;
     var totalTime = state.results.reduce(function (s, r) { return s + r.seconds; }, 0);
     $("summary-avg-dice").textContent = fmtPct(avgDice);
@@ -1614,7 +1649,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     tbody.innerHTML = "";
     state.results.forEach(function (r, i) {
       var tr = document.createElement("tr");
-      var cells = "<td>" + (i + 1) + "</td><td>" + r.dataset + "</td><td>" + r.condition + "</td><td>" + fmtPct(r.dice) + "</td><td>" + fmtSeconds(r.seconds) + "</td>";
+      var cells = "<td>" + (i + 1) + "</td><td>" + r.dataset + "</td><td>" + r.condition + "</td><td>" + fmtPct(r.dice) + "</td><td>" + fmtSeconds(r.seconds) + "</td><td>" + (r.usedHint ? "Yes" : "") + "</td>";
       if (GAMIFIED) cells += "<td>" + r.points + "</td>";
       tr.innerHTML = cells;
       tbody.appendChild(tr);
