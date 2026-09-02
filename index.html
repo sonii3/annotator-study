@@ -818,6 +818,44 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       </div>
     </div>
 
+    <div class="survey-q">
+      <div class="label">How often do you personally play games or use gamified apps (fitness trackers, language apps, and similar)?</div>
+      <div class="seg" data-question="gamingFrequency">
+        <button data-value="never">Never</button>
+        <button data-value="rarely">Rarely</button>
+        <button data-value="sometimes">Sometimes</button>
+        <button data-value="often">Often</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">If a future version showed live feedback on your score, when would you want to see it?</div>
+      <div class="seg wrap" data-question="feedbackTiming">
+        <button data-value="afterEachPatch">After every patch</button>
+        <button data-value="afterEachBlock">After every block</button>
+        <button data-value="onlyAtEnd">Only at the very end</button>
+        <button data-value="never">Never, I would rather not know</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">If a future version had a leaderboard, how should it identify people?</div>
+      <div class="seg wrap" data-question="leaderboardIdentity">
+        <button data-value="realNames">Real names</button>
+        <button data-value="anonymousHandles">Anonymous handles</button>
+        <button data-value="noLeaderboard">No leaderboard at all</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">Would game elements make you more likely to volunteer for future annotation tasks like this one?</div>
+      <div class="seg" data-question="futureParticipationLikelihood">
+        <button data-value="yes">Yes</button>
+        <button data-value="no">No</button>
+        <button data-value="unsure">Not sure</button>
+      </div>
+    </div>
+
     <button class="primary" id="futuresurvey-continue-btn" disabled>See my results &rarr;</button>
   </div>
 </div>
