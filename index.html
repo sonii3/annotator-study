@@ -491,7 +491,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   <div class="name-wrap">
     <div class="label kicker">Welcome</div>
     <h1>Welcome to the Annotator Study</h1>
-    <p>Twenty-four real specimen patches, pathology nuclei and dermoscopy lesions, each already roughly segmented by an automatic model. Correct the boundary back toward the truth with the brush or lasso. Speed and accuracy both score.</p>
+    <p>The goal of this study is to test whether an automatic, reference-free quality score can tell how good a cell or lesion segmentation mask is without ever seeing the correct answer. Your masks, drawn at different paces, are what we compare that automatic score against.</p>
+    <p id="welcome-task-p">Twenty-four real specimen patches, pathology nuclei and dermoscopy lesions. For each one, you'll draw the boundary yourself from scratch with the brush or lasso, no pre-drawn outline to start from. Speed and accuracy both score.</p>
     <button class="primary" id="welcome-continue-btn">Continue &rarr;</button>
   </div>
 </div>
@@ -538,7 +539,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     <div class="rules-card">
       <div class="label">How scoring works</div>
       <dl>
-        <dt>Match</dt><dd>Overlap (Dice) between your corrected mask and the real ground truth.</dd>
+        <dt>Match</dt><dd>Overlap (Dice) between your mask and the real ground truth.</dd>
         <dt>Speed</dt><dd>A bonus that fades out after about 90 seconds on a patch. Careful beats frantic, but don't stall.</dd>
         <dt>Streak</dt><dd>Consecutive clean matches (&ge;85%) build a streak. A rough one resets it.</dd>
       </dl>
@@ -551,9 +552,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   <div class="name-wrap">
     <div class="label kicker">Before you begin</div>
     <h1>What you'll be looking at</h1>
-    <p>Two quick examples of the raw photos in this bench, no markings, just what the tissue/lesion actually looks like. In the real task, each photo already has a rough boundary drawn on it by an automatic model. Your job is to correct that boundary with the brush or lasso tools, not draw one from scratch.</p>
+    <p>Two quick examples of the raw photos in this bench, no markings, just what the tissue/lesion actually looks like. In the real task, the canvas starts blank. Your job is to draw the boundary yourself with the brush or lasso tools, entirely from scratch.</p>
     <div class="tutorial-examples" id="tutorial-examples"></div>
-    <p>Take your time to look at the texture and edges here. The real patches are the same size and quality as what you see now. When a patch loads for real, look for where the drawn boundary doesn't match the true edge of the nucleus or lesion, and correct just that.</p>
+    <p>Take your time to look at the texture and edges here. The real patches are the same size and quality as what you see now. When a patch loads for real, look for the true edge of the nucleus or lesion, and trace it as closely as you can.</p>
     <button class="primary" id="tutorial-continue-btn">Got it, continue &rarr;</button>
   </div>
 </div>
@@ -596,7 +597,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     </div>
 
     <div class="survey-q">
-      <div class="label">What are you using to correct masks right now?</div>
+      <div class="label">What are you using to draw masks right now?</div>
       <div class="seg wrap" data-question="inputDevice">
         <button data-value="mouse">Mouse</button>
         <button data-value="trackpad">Trackpad</button>
@@ -674,7 +675,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     </div>
 
     <div class="survey-q">
-      <div class="label">How confident are you in the accuracy of your final corrections overall? (1 = not confident, 5 = very confident)</div>
+      <div class="label">How confident are you in the accuracy of your final masks overall? (1 = not confident, 5 = very confident)</div>
       <div class="seg" data-question="confidence">
         <button data-value="1">1</button>
         <button data-value="2">2</button>
@@ -704,7 +705,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     </div>
 
     <div class="survey-q">
-      <div class="label">Did you run into any technical issues while correcting masks (lag, misclicks, accidental submits)?</div>
+      <div class="label">Did you run into any technical issues while drawing masks (lag, misclicks, accidental submits)?</div>
       <div class="seg" data-question="technicalIssues">
         <button data-value="yes">Yes</button>
         <button data-value="no">No</button>
@@ -722,7 +723,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     </div>
 
     <div class="survey-q">
-      <div class="label">Did you typically review your correction before submitting, or submit as soon as it looked roughly right?</div>
+      <div class="label">Did you typically review your mask before submitting, or submit as soon as it looked roughly right?</div>
       <div class="seg wrap" data-question="reviewBehavior">
         <button data-value="always">Always reviewed carefully</button>
         <button data-value="sometimes">Sometimes reviewed</button>
@@ -983,7 +984,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     rushed: {
       kicker: "Work quickly",
       title: "Work quickly",
-      text: "Aim to finish each patch in under 15 seconds. Don't worry about getting every pixel right."
+      text: "Aim to finish each patch in under 30 seconds. Don't worry about getting every pixel right, just a quick approximate outline."
     }
   };
   function conditionOrderFor(name) {
@@ -1116,7 +1117,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       var feedbackLabel = feedbackBlock.parentElement.querySelector(".label");
       if (feedbackLabel) feedbackLabel.textContent = "Optional: any other thoughts on the task?";
     }
-    var nameScreenIntro = document.querySelector("#screen-welcome p");
+    var nameScreenIntro = document.querySelector("#welcome-task-p");
     if (nameScreenIntro) {
       nameScreenIntro.textContent = nameScreenIntro.textContent.replace(/\s*Speed and accuracy both score\.\s*$/, "");
     }
@@ -1267,18 +1268,6 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     return bin;
   }
 
-  function paintMaskFromBinary(bin) {
-    var img = maskCtx.createImageData(W, H);
-    for (var i = 0; i < W * H; i++) {
-      var on = bin[i] === 1;
-      img.data[i * 4] = 91;
-      img.data[i * 4 + 1] = 53;
-      img.data[i * 4 + 2] = 104;
-      img.data[i * 4 + 3] = on ? MASK_ALPHA : 0;
-    }
-    maskCtx.putImageData(img, 0, 0);
-  }
-
   function currentMaskBinary() {
     var data = maskCtx.getImageData(0, 0, W, H).data;
     var bin = new Uint8Array(W * H);
@@ -1313,7 +1302,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   });
   $("reset-btn").addEventListener("click", function () {
     pushUndo();
-    paintMaskFromBinary(binaryMaskFromImage(state._candidateImg));
+    maskCtx.clearRect(0, 0, W, H);
   });
 
   // ---------------- drawing ----------------
@@ -1427,10 +1416,16 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     }
 
     loadImageToCanvas(p.image, imgCtx);
-    loadImageToCanvas(p.candidate, maskCtx, function (im) {
-      state._candidateImg = im;
+    // The annotator draws from a blank canvas, not a corrected candidate --
+    // the automatic model's candidate mask is still loaded here, but only
+    // off-screen, so state.startDice (the candidate's own Dice vs GT) can be
+    // exported as a hidden human-vs-automatic comparison point, never shown
+    // or painted onto the visible mask.
+    maskCtx.clearRect(0, 0, W, H);
+    var offCand = document.createElement("canvas");
+    offCand.width = W; offCand.height = H;
+    loadImageToCanvas(p.candidate, offCand.getContext("2d"), function (im) {
       state.candidateBin = binaryMaskFromImage(im);
-      paintMaskFromBinary(state.candidateBin);
       maybeComputeStartDice();
     });
 
@@ -1463,21 +1458,15 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     return (2 * inter) / (sa + sb);
   }
 
-  // Points reward the annotator's own work, not the starting candidate's
-  // quality (2026-08-19 pilot feedback: raw final Dice gave "free" points
-  // for datasets/patches where the starting candidate was already close to
-  // GT, e.g. ISIC's ~0.88 zero-effort Dice even after the L3 severity
-  // bump). Scored as the fraction of the *remaining gap* actually closed --
-  // (dice - startDice) / (1 - startDice) -- so reaching a perfect mask
-  // always earns full quality points regardless of how good or bad the
-  // starting candidate was, instead of patches with an easier starting
-  // point structurally capping out lower.
-  function pointsFor(dice, startDice, seconds) {
-    var gap = 1 - startDice;
-    var closedRatio = gap > 1e-9 ? (dice - startDice) / gap : (dice >= startDice ? 1 : 0);
-    closedRatio = Math.max(0, Math.min(1, closedRatio));
-    var quality = Math.round(closedRatio * 800);
-    var speedBonus = Math.round(Math.max(0, 90 - seconds) * 4);
+  // The annotator draws from a blank canvas, so quality points are just raw
+  // final Dice vs GT (no separate starting point to measure a "gap closed"
+  // against anymore). The speed bonus is scaled by dice itself, so it can't
+  // be earned by rushing through a patch without producing an actual mask --
+  // a fast, empty/near-empty submission scores close to zero either way,
+  // not just a fast one with no quality.
+  function pointsFor(dice, seconds) {
+    var quality = Math.round(dice * 800);
+    var speedBonus = Math.round(Math.max(0, 90 - seconds) * 4 * dice);
     return quality + speedBonus;
   }
 
@@ -1507,8 +1496,12 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     var seconds = (performance.now() - state.startTs) / 1000;
     var mine = currentMaskBinary();
     var dice = state.gtData ? diceScore(mine, state.gtData) : 0;
+    // startDice here is the automatic candidate's own Dice vs GT (never
+    // shown to the annotator) -- kept only as an exported human-vs-automatic
+    // comparison point, not used in pointsFor() since there's no starting
+    // mask to measure a gap against anymore.
     var startDice = state.startDice == null ? dice : state.startDice;
-    var pts = pointsFor(dice, startDice, seconds);
+    var pts = pointsFor(dice, seconds);
 
     state.points += pts;
     if (dice >= CLEAN_MATCH_THRESHOLD) {
