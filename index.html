@@ -481,6 +481,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .podium-meta { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); }
 .podium-points { font-family: var(--mono); font-size: 20px; font-weight: 700; text-align: right; }
 .empty-note { color: var(--ink-soft); font-size: 14px; }
+.study-structure { color: var(--ink-soft); font-size: 17px; margin: 0; padding-left: 22px; }
+.study-structure li { margin-bottom: 6px; }
 </style>
 
 <div class="screen active" id="screen-welcome">
@@ -493,6 +495,19 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     <h1>Welcome to the Annotator Study</h1>
     <p>The aim of this study is to test whether an automatic, reference-free quality score can rank annotators by how carefully and accurately they work. Your masks, drawn at different paces, are what we compare that automatic score against.</p>
     <p id="welcome-task-p">Twenty-four real pathology nuclei and dermoscopy lesions patches are to be annotated. For each one, you'll draw the boundary yourself from scratch with the brush or lasso, no pre-drawn outline to start from. How long this takes is individual and depends on your own experience. Speed and accuracy both score.</p>
+    <div>
+      <div class="label kicker" style="margin-bottom:8px;">How this study is structured</div>
+      <ol class="study-structure">
+        <li>A few quick personal questions.</li>
+        <li>A short tutorial with two example images, no scoring.</li>
+        <li>A few more quick questions before you start.</li>
+        <li>Block 1: 12 patches, at one pace, careful or rushed.</li>
+        <li>Block 2: the other 12 patches, at the other pace.</li>
+        <li>A short survey about the task.</li>
+        <li>One more question, for a possible future study.</li>
+        <li>Your results, ready to send.</li>
+      </ol>
+    </div>
     <button class="primary" id="welcome-continue-btn">Continue &rarr;</button>
   </div>
 </div>
