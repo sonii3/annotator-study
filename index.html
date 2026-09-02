@@ -483,16 +483,58 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .empty-note { color: var(--ink-soft); font-size: 14px; }
 </style>
 
-<div class="screen active" id="screen-name">
+<div class="screen active" id="screen-welcome">
   <div class="bench-header">
     <div class="bench-title">Annotator Study<span class="tick">_</span></div>
     <div class="bench-nav"><button id="nav-to-board-1">Leaderboard reveal</button></div>
   </div>
   <div class="name-wrap">
-    <div class="label kicker">Annotator check-in</div>
-    <h1>Who's at the bench?</h1>
+    <div class="label kicker">Welcome</div>
+    <h1>Welcome to the Annotator Study</h1>
     <p>Twenty-four real specimen patches, pathology nuclei and dermoscopy lesions, each already roughly segmented by an automatic model. Correct the boundary back toward the truth with the brush or lasso. Speed and accuracy both score.</p>
+    <button class="primary" id="welcome-continue-btn">Continue &rarr;</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-name">
+  <div class="bench-header">
+    <div class="bench-title">Annotator Study<span class="tick">_</span></div>
+    <div class="bench-nav"><button id="nav-to-board-1b">Leaderboard reveal</button></div>
+  </div>
+  <div class="name-wrap">
+    <div class="label kicker">Personal information</div>
+    <h1>Who's at the bench?</h1>
     <input type="text" id="name-input" placeholder="Type your name" maxlength="30" />
+
+    <div class="survey-q">
+      <div class="label">What is your professional or academic background?</div>
+      <div class="seg wrap" data-question="background">
+        <button data-value="medicine-biology">Medicine/Biology</button>
+        <button data-value="cs-engineering">Computer Science/Engineering</button>
+        <button data-value="other-stem">Other natural sciences</button>
+        <button data-value="other">Other</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">Years of experience annotating or analyzing biomedical images (histopathology, dermoscopy, or similar)?</div>
+      <div class="seg wrap" data-question="experience">
+        <button data-value="none">None</button>
+        <button data-value="lt1">&lt;1 yr</button>
+        <button data-value="1to3">1&ndash;3 yr</button>
+        <button data-value="3plus">3+ yr</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">Do you have formal training in reading histopathology or dermoscopy images (medical, biology, or similar background)?</div>
+      <div class="seg" data-question="domainTraining">
+        <button data-value="yes">Yes</button>
+        <button data-value="somewhat">Some coursework/exposure</button>
+        <button data-value="no">No</button>
+      </div>
+    </div>
+
     <div class="rules-card">
       <div class="label">How scoring works</div>
       <dl>
@@ -523,26 +565,6 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     <p>No wrong answers, this just helps us interpret the scores afterward.</p>
 
     <div class="survey-q">
-      <div class="label">What is your professional or academic background?</div>
-      <div class="seg wrap" data-question="background">
-        <button data-value="medicine-biology">Medicine/Biology</button>
-        <button data-value="cs-engineering">Computer Science/Engineering</button>
-        <button data-value="other-stem">Other natural sciences</button>
-        <button data-value="other">Other</button>
-      </div>
-    </div>
-
-    <div class="survey-q">
-      <div class="label">Years of experience annotating or analyzing biomedical images (histopathology, dermoscopy, or similar)?</div>
-      <div class="seg wrap" data-question="experience">
-        <button data-value="none">None</button>
-        <button data-value="lt1">&lt;1 yr</button>
-        <button data-value="1to3">1&ndash;3 yr</button>
-        <button data-value="3plus">3+ yr</button>
-      </div>
-    </div>
-
-    <div class="survey-q">
       <div class="label">How familiar are you with cell/nucleus segmentation specifically? (1 = not at all, 5 = very)</div>
       <div class="seg" data-question="familiarity">
         <button data-value="1">1</button>
@@ -570,15 +592,6 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
         <button data-value="3">3</button>
         <button data-value="4">4</button>
         <button data-value="5">5</button>
-      </div>
-    </div>
-
-    <div class="survey-q">
-      <div class="label">Do you have formal training in reading histopathology or dermoscopy images (medical, biology, or similar background)?</div>
-      <div class="seg" data-question="domainTraining">
-        <button data-value="yes">Yes</button>
-        <button data-value="somewhat">Some coursework/exposure</button>
-        <button data-value="no">No</button>
       </div>
     </div>
 
@@ -1064,7 +1077,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   // is shown. See the GAMIFIED comment above for why this exists.
   function applyGamificationMode() {
     if (GAMIFIED) return;
-    ["nav-to-board-1", "nav-to-board-2"].forEach(function (id) {
+    ["nav-to-board-1", "nav-to-board-1b", "nav-to-board-2"].forEach(function (id) {
       var el = $(id);
       if (el) el.remove();
     });
@@ -1103,7 +1116,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       var feedbackLabel = feedbackBlock.parentElement.querySelector(".label");
       if (feedbackLabel) feedbackLabel.textContent = "Optional: any other thoughts on the task?";
     }
-    var nameScreenIntro = document.querySelector("#screen-name p");
+    var nameScreenIntro = document.querySelector("#screen-welcome p");
     if (nameScreenIntro) {
       nameScreenIntro.textContent = nameScreenIntro.textContent.replace(/\s*Speed and accuracy both score\.\s*$/, "");
     }
@@ -1120,10 +1133,17 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   function fmtSeconds(s) { return s.toFixed(1) + "s"; }
   function fmtPct(x) { return Math.round(x * 100) + "%"; }
 
-  // ---------------- name screen ----------------
-  $("name-input").addEventListener("input", function () {
-    $("start-btn").disabled = $("name-input").value.trim().length === 0;
+  // ---------------- welcome / name screen ----------------
+  $("welcome-continue-btn").addEventListener("click", function () {
+    showScreen("screen-name");
   });
+  var nameSurveyRoot = $("screen-name");
+  function updateStartBtnState() {
+    var nameOk = $("name-input").value.trim().length > 0;
+    $("start-btn").disabled = !nameOk || !allSurveyQuestionsAnswered(nameSurveyRoot, state.preSurvey);
+  }
+  $("name-input").addEventListener("input", updateStartBtnState);
+  bindSurveyQuestions(nameSurveyRoot, function () { return state.preSurvey; }, updateStartBtnState);
   function showBlockIntro(blockIdx) {
     var condOrder = conditionOrderFor(state.name);
     var cond = condOrder[blockIdx];
@@ -1159,7 +1179,6 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     state.streak = 0;
     state.bestStreak = 0;
     state.badges = [];
-    state.preSurvey = {};
     showScreen("screen-tutorial");
   }
 
@@ -1742,31 +1761,39 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     $(continueBtnId).disabled = true;
   }
   $("restart-btn").addEventListener("click", function () {
+    resetSurveyUI(nameSurveyRoot, "start-btn");
     resetSurveyUI(presurveyRoot, "presurvey-continue-btn");
     resetSurveyUI(postsurveyRoot, "postsurvey-continue-btn");
     resetSurveyUI(futuresurveyRoot, "futuresurvey-continue-btn");
-    showScreen("screen-name");
+    state.preSurvey = {};
+    $("name-input").value = "";
+    showScreen("screen-welcome");
   });
-  $("nav-to-board-1").addEventListener("click", function () { showScreen("screen-board"); });
-  $("nav-to-board-2").addEventListener("click", function () { showScreen("screen-board"); });
-  $("nav-to-name").addEventListener("click", function () { showScreen("screen-name"); });
+  ["nav-to-board-1", "nav-to-board-1b", "nav-to-board-2"].forEach(function (id) {
+    var el = $(id);
+    if (el) el.addEventListener("click", function () { showScreen("screen-board"); });
+  });
+  var navToName = $("nav-to-name");
+  if (navToName) navToName.addEventListener("click", function () { showScreen("screen-name"); });
 
   // ---------------- leaderboard ----------------
   var dropzone = $("dropzone");
   var fileInput = $("file-input");
   var boardEntries = [];
 
-  dropzone.addEventListener("click", function () { fileInput.click(); });
-  ["dragover", "dragenter"].forEach(function (evt) {
-    dropzone.addEventListener(evt, function (e) { e.preventDefault(); dropzone.classList.add("over"); });
-  });
-  ["dragleave", "drop"].forEach(function (evt) {
-    dropzone.addEventListener(evt, function (e) { e.preventDefault(); dropzone.classList.remove("over"); });
-  });
-  dropzone.addEventListener("drop", function (e) {
-    handleFiles(e.dataTransfer.files);
-  });
-  fileInput.addEventListener("change", function () { handleFiles(this.files); });
+  if (dropzone && fileInput) {
+    dropzone.addEventListener("click", function () { fileInput.click(); });
+    ["dragover", "dragenter"].forEach(function (evt) {
+      dropzone.addEventListener(evt, function (e) { e.preventDefault(); dropzone.classList.add("over"); });
+    });
+    ["dragleave", "drop"].forEach(function (evt) {
+      dropzone.addEventListener(evt, function (e) { e.preventDefault(); dropzone.classList.remove("over"); });
+    });
+    dropzone.addEventListener("drop", function (e) {
+      handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener("change", function () { handleFiles(this.files); });
+  }
 
   function handleFiles(files) {
     Array.prototype.slice.call(files).forEach(function (f) {
