@@ -280,6 +280,11 @@ input[type="text"]:focus-visible { outline: 2px solid var(--accent); outline-off
 }
 .canvas-stage canvas#imgCanvas { z-index: 1; }
 .canvas-stage canvas#maskCanvas { z-index: 2; cursor: crosshair; }
+.canvas-stage canvas#practiceImgCanvas { z-index: 1; }
+.canvas-stage canvas#practiceMaskCanvas { z-index: 2; cursor: crosshair; }
+.practice-layout { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+.practice-layout .canvas-stage { margin: 0; flex-shrink: 0; }
+.practice-layout .tool-rail { max-width: 220px; }
 
 .tool-rail {
   display: flex;
@@ -571,6 +576,37 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     <p>Two quick examples of the raw photos in this bench, no markings, just what the tissue/lesion actually looks like. In the real task, the canvas starts blank. Your job is to draw the boundary yourself with the brush or lasso tools, entirely from scratch.</p>
     <div class="tutorial-examples" id="tutorial-examples"></div>
     <p>Take your time to look at the texture and edges here. The real patches are the same size and quality as what you see now. When a patch loads for real, look for the true edge of the nucleus or lesion, and trace it as closely as you can.</p>
+
+    <div class="label kicker" style="margin-top:8px;">Try it yourself</div>
+    <p>Practice on this image before the real task starts. Nothing you draw here is scored or submitted, it's only so you're comfortable with the tools first.</p>
+    <div class="practice-layout">
+      <div class="canvas-stage">
+        <canvas id="practiceImgCanvas" width="256" height="256"></canvas>
+        <canvas id="practiceMaskCanvas" width="256" height="256"></canvas>
+      </div>
+      <div class="tool-rail">
+        <div class="tool-group">
+          <span class="label">Tool</span>
+          <div class="seg" id="practice-tool-seg">
+            <button data-tool="brush" class="on" title="Brush">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 15c-1.5 1.5-2 3-3 3s-2-1-2-2 1.5-1.5 3-3l9-9 2 2z"/><path d="M14 6l4 4"/></svg>
+              Brush
+            </button>
+            <button data-tool="lasso" title="Lasso">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12a5 4 0 1 1 6 4c-2 1-1 3 1 3"/><circle cx="16" cy="19" r="1.6"/></svg>
+              Lasso
+            </button>
+          </div>
+        </div>
+        <div class="tool-group">
+          <div class="size-readout"><span>Brush: click and drag along an edge. Lasso: click around a region's outline, release to close and fill it.</span></div>
+        </div>
+        <div class="tool-group">
+          <button id="practice-clear-btn">Clear</button>
+        </div>
+      </div>
+    </div>
+
     <button class="primary" id="tutorial-continue-btn">Got it, continue &rarr;</button>
   </div>
 </div>
@@ -1234,6 +1270,89 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       fig.className = "tutorial-example";
       fig.innerHTML = '<img src="' + ex.image + '" alt="' + ex.label + '"><figcaption>' + ex.label + '</figcaption>';
       root.appendChild(fig);
+    });
+  })();
+
+  // Practice canvas on the tutorial screen -- a real, working brush/lasso
+  // sandbox on one example image, entirely separate from the annotate
+  // screen's own state/canvas (never scored, never submitted, purely so
+  // an annotator's first real stroke isn't on a patch that counts).
+  (function setupPracticeCanvas() {
+    var practiceImgCanvas = $("practiceImgCanvas");
+    var practiceMaskCanvas = $("practiceMaskCanvas");
+    var pImgCtx = practiceImgCanvas.getContext("2d");
+    var pMaskCtx = practiceMaskCanvas.getContext("2d");
+    var pW = practiceImgCanvas.width, pH = practiceImgCanvas.height;
+    var pTool = "brush";
+    var pDrawing = false;
+    var pLassoPts = [];
+    var pLastPos = null;
+    var PRACTICE_BRUSH_SIZE = 24;
+
+    var img = new Image();
+    img.onload = function () { pImgCtx.drawImage(img, 0, 0, pW, pH); };
+    img.src = TUTORIAL_EXAMPLES[0].image;
+
+    function pCanvasPos(evt) {
+      var r = practiceMaskCanvas.getBoundingClientRect();
+      return { x: ((evt.clientX - r.left) / r.width) * pW, y: ((evt.clientY - r.top) / r.height) * pH };
+    }
+    function pSetComposite() {
+      pMaskCtx.globalCompositeOperation = "source-over";
+      pMaskCtx.fillStyle = "rgba(191,53,104," + (MASK_ALPHA / 255) + ")";
+    }
+    function pStampBrush(x, y) {
+      pMaskCtx.beginPath();
+      pMaskCtx.arc(x, y, PRACTICE_BRUSH_SIZE / 2, 0, Math.PI * 2);
+      pMaskCtx.fill();
+    }
+    practiceMaskCanvas.addEventListener("pointerdown", function (evt) {
+      practiceMaskCanvas.setPointerCapture(evt.pointerId);
+      pSetComposite();
+      var p = pCanvasPos(evt);
+      pDrawing = true;
+      if (pTool === "brush") { pLastPos = p; pStampBrush(p.x, p.y); }
+      else { pLassoPts = [p]; }
+    });
+    practiceMaskCanvas.addEventListener("pointermove", function (evt) {
+      if (!pDrawing) return;
+      var p = pCanvasPos(evt);
+      if (pTool === "brush") {
+        var steps = Math.max(1, Math.ceil(Math.hypot(p.x - pLastPos.x, p.y - pLastPos.y) / (PRACTICE_BRUSH_SIZE / 3)));
+        for (var i = 1; i <= steps; i++) {
+          var t = i / steps;
+          pStampBrush(pLastPos.x + (p.x - pLastPos.x) * t, pLastPos.y + (p.y - pLastPos.y) * t);
+        }
+        pLastPos = p;
+      } else {
+        pLassoPts.push(p);
+      }
+    });
+    function pEndStroke() {
+      if (!pDrawing) return;
+      pDrawing = false;
+      if (pTool === "lasso" && pLassoPts.length > 2) {
+        pSetComposite();
+        pMaskCtx.beginPath();
+        pMaskCtx.moveTo(pLassoPts[0].x, pLassoPts[0].y);
+        for (var i = 1; i < pLassoPts.length; i++) pMaskCtx.lineTo(pLassoPts[i].x, pLassoPts[i].y);
+        pMaskCtx.closePath();
+        pMaskCtx.fill();
+      }
+      pLassoPts = [];
+    }
+    practiceMaskCanvas.addEventListener("pointerup", pEndStroke);
+    practiceMaskCanvas.addEventListener("pointercancel", pEndStroke);
+
+    document.querySelectorAll("#practice-tool-seg button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        document.querySelectorAll("#practice-tool-seg button").forEach(function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        pTool = b.getAttribute("data-tool");
+      });
+    });
+    $("practice-clear-btn").addEventListener("click", function () {
+      pMaskCtx.clearRect(0, 0, pW, pH);
     });
   })();
 
