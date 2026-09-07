@@ -511,8 +511,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       <div class="label kicker" style="margin-bottom:8px;">How this study is structured</div>
       <ol class="study-structure">
         <li>A few quick personal questions.</li>
+        <li>What you'll be looking at: two example photos.</li>
         <li>A few more quick questions before you start.</li>
-        <li>A short tutorial with example images and a practice canvas, no scoring.</li>
+        <li>A worked example and a practice canvas, right before the real task, no scoring.</li>
         <li>Block 1: 12 patches, at one pace, careful or rushed.</li>
         <li>Block 2: the other 12 patches, at the other pace.</li>
         <li>A short survey about the task.</li>
@@ -582,9 +583,15 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     <p>Two quick examples of the raw photos in this bench, no markings, just what the tissue/lesion actually looks like. In the real task, the canvas starts blank. Your job is to draw the boundary yourself with the brush or lasso tools, entirely from scratch.</p>
     <div class="tutorial-examples" id="tutorial-examples"></div>
     <p>Take your time to look at the texture and edges here. The real patches are the same size and quality as what you see now. When a patch loads for real, look for the true edge of the nucleus or lesion, and trace it as closely as you can.</p>
+    <button class="primary" id="tutorial-continue-btn">Got it, continue &rarr;</button>
+  </div>
+</div>
 
-    <div class="label kicker" style="margin-top:8px;">Example: a finished annotation</div>
-    <p>Here is what a correctly traced boundary looks like on one of the photos above, for reference only, not something to copy exactly since every patch is different. This is the exercise: an outline that follows the true edge of the object as closely as you can manage.</p>
+<div class="screen" id="screen-tutorial-example">
+  <div class="name-wrap">
+    <div class="label kicker">Right before you start</div>
+    <h1>Example: a finished annotation</h1>
+    <p>Here is what a correctly traced boundary looks like on one of the photos from before, for reference only, not something to copy exactly since every patch is different. This is the exercise: an outline that follows the true edge of the object as closely as you can manage.</p>
     <div class="tutorial-examples" id="tutorial-worked-example"></div>
 
     <div class="label kicker" style="margin-top:8px;">Try it yourself</div>
@@ -618,7 +625,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       </div>
     </div>
 
-    <button class="primary" id="tutorial-continue-btn">Got it, continue &rarr;</button>
+    <button class="primary" id="tutorial-example-continue-btn">Start the real task &rarr;</button>
   </div>
 </div>
 
@@ -1405,7 +1412,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     state.streak = 0;
     state.bestStreak = 0;
     state.badges = [];
-    showScreen("screen-presurvey");
+    showScreen("screen-tutorial");
   }
 
   $("start-btn").addEventListener("click", function () {
@@ -1451,7 +1458,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   });
 
   $("tutorial-continue-btn").addEventListener("click", function () {
-    showBlockIntro(0);
+    showScreen("screen-presurvey");
   });
 
   var presurveyRoot = $("screen-presurvey");
@@ -1459,7 +1466,10 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     $("presurvey-continue-btn").disabled = !allSurveyQuestionsAnswered(presurveyRoot, state.preSurvey);
   });
   $("presurvey-continue-btn").addEventListener("click", function () {
-    showScreen("screen-tutorial");
+    showScreen("screen-tutorial-example");
+  });
+  $("tutorial-example-continue-btn").addEventListener("click", function () {
+    showBlockIntro(0);
   });
 
   $("block-begin-btn").addEventListener("click", function () {
