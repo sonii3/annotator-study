@@ -281,10 +281,10 @@ input[type="text"]:focus-visible { outline: 2px solid var(--accent); outline-off
 .canvas-stage canvas#imgCanvas { z-index: 1; }
 .canvas-stage canvas#maskCanvas { z-index: 2; cursor: crosshair; }
 .canvas-stage canvas#lassoPreviewCanvas { z-index: 3; pointer-events: none; }
-.canvas-stage canvas#practiceImgCanvas { z-index: 1; }
-.canvas-stage canvas#practiceMaskCanvas { z-index: 2; cursor: crosshair; }
-.canvas-stage canvas#practiceLassoPreviewCanvas { z-index: 3; pointer-events: none; }
-.practice-layout { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+.canvas-stage canvas#practiceImgCanvasA, .canvas-stage canvas#practiceImgCanvasB { z-index: 1; }
+.canvas-stage canvas#practiceMaskCanvasA, .canvas-stage canvas#practiceMaskCanvasB { z-index: 2; cursor: crosshair; }
+.canvas-stage canvas#practiceLassoPreviewCanvasA, .canvas-stage canvas#practiceLassoPreviewCanvasB { z-index: 3; pointer-events: none; }
+.practice-layout { display: flex; gap: 20px; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
 .practice-layout .canvas-stage { margin: 0; flex-shrink: 0; }
 .practice-layout .tool-rail { max-width: 220px; }
 
@@ -591,12 +591,12 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     <div class="tutorial-examples" id="tutorial-worked-example"></div>
 
     <div class="label kicker" style="margin-top:8px;">Try it yourself</div>
-    <p>Practice on this image before the real task starts. Nothing you draw here is scored or submitted, it's only so you're comfortable with the tools first.</p>
+    <p>Practice on these images before the real task starts, pathology on the left, dermoscopy on the right. Nothing you draw here is scored or submitted, it's only so you're comfortable with the tools first.</p>
     <div class="practice-layout">
       <div class="canvas-stage">
-        <canvas id="practiceImgCanvas" width="256" height="256"></canvas>
-        <canvas id="practiceMaskCanvas" width="256" height="256"></canvas>
-        <canvas id="practiceLassoPreviewCanvas" width="256" height="256"></canvas>
+        <canvas id="practiceImgCanvasA" width="256" height="256"></canvas>
+        <canvas id="practiceMaskCanvasA" width="256" height="256"></canvas>
+        <canvas id="practiceLassoPreviewCanvasA" width="256" height="256"></canvas>
       </div>
       <div class="tool-rail">
         <div class="tool-group">
@@ -616,8 +616,13 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
           <div class="size-readout"><span>Brush: click and drag along an edge. Lasso: click around a region's outline, release to close and fill it.</span></div>
         </div>
         <div class="tool-group">
-          <button id="practice-clear-btn">Clear</button>
+          <button id="practice-clear-btn">Clear both</button>
         </div>
+      </div>
+      <div class="canvas-stage">
+        <canvas id="practiceImgCanvasB" width="256" height="256"></canvas>
+        <canvas id="practiceMaskCanvasB" width="256" height="256"></canvas>
+        <canvas id="practiceLassoPreviewCanvasB" width="256" height="256"></canvas>
       </div>
     </div>
 
@@ -1297,92 +1302,106 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     });
   })();
 
-  // Practice canvas on the tutorial screen -- a real, working brush/lasso
-  // sandbox on one example image, entirely separate from the annotate
-  // screen's own state/canvas (never scored, never submitted, purely so
-  // an annotator's first real stroke isn't on a patch that counts).
-  (function setupPracticeCanvas() {
-    var practiceImgCanvas = $("practiceImgCanvas");
-    var practiceMaskCanvas = $("practiceMaskCanvas");
-    var practiceLassoPreviewCanvas = $("practiceLassoPreviewCanvas");
-    var pImgCtx = practiceImgCanvas.getContext("2d");
-    var pMaskCtx = practiceMaskCanvas.getContext("2d");
-    var pLassoPreviewCtx = practiceLassoPreviewCanvas.getContext("2d");
-    var pW = practiceImgCanvas.width, pH = practiceImgCanvas.height;
+  // Practice canvases on the tutorial screen -- two real, working
+  // brush/lasso sandboxes, one per dataset (pathology + dermoscopy),
+  // sharing one tool selection in the middle, entirely separate from the
+  // annotate screen's own state/canvas (never scored, never submitted,
+  // purely so an annotator's first real stroke isn't on a patch that
+  // counts).
+  (function setupPracticeCanvases() {
     var pTool = "brush";
-    var pDrawing = false;
-    var pLassoPts = [];
-    var pLastPos = null;
     var PRACTICE_BRUSH_SIZE = 24;
+    var clearFns = [];
 
-    var img = new Image();
-    img.onload = function () { pImgCtx.drawImage(img, 0, 0, pW, pH); };
-    img.src = TUTORIAL_EXAMPLES[0].image;
+    function initOne(suffix, imageSrc) {
+      var imgCanvas = $("practiceImgCanvas" + suffix);
+      var maskCanvas = $("practiceMaskCanvas" + suffix);
+      var previewCanvas = $("practiceLassoPreviewCanvas" + suffix);
+      var pImgCtx = imgCanvas.getContext("2d");
+      var pMaskCtx = maskCanvas.getContext("2d");
+      var pLassoPreviewCtx = previewCanvas.getContext("2d");
+      var pW = imgCanvas.width, pH = imgCanvas.height;
+      var pDrawing = false;
+      var pLassoPts = [];
+      var pLastPos = null;
 
-    function pCanvasPos(evt) {
-      var r = practiceMaskCanvas.getBoundingClientRect();
-      return { x: ((evt.clientX - r.left) / r.width) * pW, y: ((evt.clientY - r.top) / r.height) * pH };
-    }
-    function pSetComposite() {
-      pMaskCtx.globalCompositeOperation = "source-over";
-      pMaskCtx.fillStyle = "rgba(191,53,104," + (MASK_ALPHA / 255) + ")";
-    }
-    function pStampBrush(x, y) {
-      pMaskCtx.beginPath();
-      pMaskCtx.arc(x, y, PRACTICE_BRUSH_SIZE / 2, 0, Math.PI * 2);
-      pMaskCtx.fill();
-    }
-    practiceMaskCanvas.addEventListener("pointerdown", function (evt) {
-      practiceMaskCanvas.setPointerCapture(evt.pointerId);
-      pSetComposite();
-      var p = pCanvasPos(evt);
-      pDrawing = true;
-      if (pTool === "brush") { pLastPos = p; pStampBrush(p.x, p.y); }
-      else { pLassoPts = [p]; }
-    });
-    practiceMaskCanvas.addEventListener("pointermove", function (evt) {
-      if (!pDrawing) return;
-      var p = pCanvasPos(evt);
-      if (pTool === "brush") {
-        var steps = Math.max(1, Math.ceil(Math.hypot(p.x - pLastPos.x, p.y - pLastPos.y) / (PRACTICE_BRUSH_SIZE / 3)));
-        for (var i = 1; i <= steps; i++) {
-          var t = i / steps;
-          pStampBrush(pLastPos.x + (p.x - pLastPos.x) * t, pLastPos.y + (p.y - pLastPos.y) * t);
-        }
-        pLastPos = p;
-      } else {
-        pLassoPts.push(p);
-        pDrawLassoPreview();
+      var img = new Image();
+      img.onload = function () { pImgCtx.drawImage(img, 0, 0, pW, pH); };
+      img.src = imageSrc;
+
+      function pCanvasPos(evt) {
+        var r = maskCanvas.getBoundingClientRect();
+        return { x: ((evt.clientX - r.left) / r.width) * pW, y: ((evt.clientY - r.top) / r.height) * pH };
       }
-    });
-    function pDrawLassoPreview() {
-      pLassoPreviewCtx.clearRect(0, 0, pW, pH);
-      if (pLassoPts.length < 2) return;
-      pLassoPreviewCtx.setLineDash([5, 4]);
-      pLassoPreviewCtx.lineWidth = 2;
-      pLassoPreviewCtx.strokeStyle = "rgba(255,255,255,0.95)";
-      pLassoPreviewCtx.beginPath();
-      pLassoPreviewCtx.moveTo(pLassoPts[0].x, pLassoPts[0].y);
-      for (var i = 1; i < pLassoPts.length; i++) pLassoPreviewCtx.lineTo(pLassoPts[i].x, pLassoPts[i].y);
-      pLassoPreviewCtx.lineTo(pLassoPts[0].x, pLassoPts[0].y);
-      pLassoPreviewCtx.stroke();
-    }
-    function pEndStroke() {
-      if (!pDrawing) return;
-      pDrawing = false;
-      if (pTool === "lasso" && pLassoPts.length > 2) {
-        pSetComposite();
+      function pSetComposite() {
+        pMaskCtx.globalCompositeOperation = "source-over";
+        pMaskCtx.fillStyle = "rgba(191,53,104," + (MASK_ALPHA / 255) + ")";
+      }
+      function pStampBrush(x, y) {
         pMaskCtx.beginPath();
-        pMaskCtx.moveTo(pLassoPts[0].x, pLassoPts[0].y);
-        for (var i = 1; i < pLassoPts.length; i++) pMaskCtx.lineTo(pLassoPts[i].x, pLassoPts[i].y);
-        pMaskCtx.closePath();
+        pMaskCtx.arc(x, y, PRACTICE_BRUSH_SIZE / 2, 0, Math.PI * 2);
         pMaskCtx.fill();
       }
-      pLassoPts = [];
-      pLassoPreviewCtx.clearRect(0, 0, pW, pH);
+      maskCanvas.addEventListener("pointerdown", function (evt) {
+        maskCanvas.setPointerCapture(evt.pointerId);
+        pSetComposite();
+        var p = pCanvasPos(evt);
+        pDrawing = true;
+        if (pTool === "brush") { pLastPos = p; pStampBrush(p.x, p.y); }
+        else { pLassoPts = [p]; }
+      });
+      maskCanvas.addEventListener("pointermove", function (evt) {
+        if (!pDrawing) return;
+        var p = pCanvasPos(evt);
+        if (pTool === "brush") {
+          var steps = Math.max(1, Math.ceil(Math.hypot(p.x - pLastPos.x, p.y - pLastPos.y) / (PRACTICE_BRUSH_SIZE / 3)));
+          for (var i = 1; i <= steps; i++) {
+            var t = i / steps;
+            pStampBrush(pLastPos.x + (p.x - pLastPos.x) * t, pLastPos.y + (p.y - pLastPos.y) * t);
+          }
+          pLastPos = p;
+        } else {
+          pLassoPts.push(p);
+          pDrawLassoPreview();
+        }
+      });
+      function pDrawLassoPreview() {
+        pLassoPreviewCtx.clearRect(0, 0, pW, pH);
+        if (pLassoPts.length < 2) return;
+        pLassoPreviewCtx.setLineDash([5, 4]);
+        pLassoPreviewCtx.lineWidth = 2;
+        pLassoPreviewCtx.strokeStyle = "rgba(255,255,255,0.95)";
+        pLassoPreviewCtx.beginPath();
+        pLassoPreviewCtx.moveTo(pLassoPts[0].x, pLassoPts[0].y);
+        for (var i = 1; i < pLassoPts.length; i++) pLassoPreviewCtx.lineTo(pLassoPts[i].x, pLassoPts[i].y);
+        pLassoPreviewCtx.lineTo(pLassoPts[0].x, pLassoPts[0].y);
+        pLassoPreviewCtx.stroke();
+      }
+      function pEndStroke() {
+        if (!pDrawing) return;
+        pDrawing = false;
+        if (pTool === "lasso" && pLassoPts.length > 2) {
+          pSetComposite();
+          pMaskCtx.beginPath();
+          pMaskCtx.moveTo(pLassoPts[0].x, pLassoPts[0].y);
+          for (var i = 1; i < pLassoPts.length; i++) pMaskCtx.lineTo(pLassoPts[i].x, pLassoPts[i].y);
+          pMaskCtx.closePath();
+          pMaskCtx.fill();
+        }
+        pLassoPts = [];
+        pLassoPreviewCtx.clearRect(0, 0, pW, pH);
+      }
+      maskCanvas.addEventListener("pointerup", pEndStroke);
+      maskCanvas.addEventListener("pointercancel", pEndStroke);
+
+      clearFns.push(function () {
+        pMaskCtx.clearRect(0, 0, pW, pH);
+        pLassoPreviewCtx.clearRect(0, 0, pW, pH);
+      });
     }
-    practiceMaskCanvas.addEventListener("pointerup", pEndStroke);
-    practiceMaskCanvas.addEventListener("pointercancel", pEndStroke);
+
+    initOne("A", TUTORIAL_EXAMPLES[0].image);
+    initOne("B", TUTORIAL_EXAMPLES[1].image);
 
     document.querySelectorAll("#practice-tool-seg button").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -1392,8 +1411,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       });
     });
     $("practice-clear-btn").addEventListener("click", function () {
-      pMaskCtx.clearRect(0, 0, pW, pH);
-      pLassoPreviewCtx.clearRect(0, 0, pW, pH);
+      clearFns.forEach(function (fn) { fn(); });
     });
   })();
 
