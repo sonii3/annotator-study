@@ -507,8 +507,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       <div class="label kicker" style="margin-bottom:8px;">How this study is structured</div>
       <ol class="study-structure">
         <li>A few quick personal questions.</li>
-        <li>What you'll be looking at: two example photos.</li>
         <li>A few more quick questions before you start.</li>
+        <li>What you'll be looking at: two example photos.</li>
         <li>A worked example and a practice canvas, right before the real task, no scoring.</li>
         <li>Block 1: 12 patches, at one pace, careful or rushed.</li>
         <li>Block 2: the other 12 patches, at the other pace.</li>
@@ -1427,7 +1427,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     state.streak = 0;
     state.bestStreak = 0;
     state.badges = [];
-    showScreen("screen-tutorial");
+    showScreen("screen-presurvey");
   }
 
   $("start-btn").addEventListener("click", function () {
@@ -1473,7 +1473,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   });
 
   $("tutorial-continue-btn").addEventListener("click", function () {
-    showScreen("screen-presurvey");
+    showScreen("screen-tutorial-example");
   });
 
   var presurveyRoot = $("screen-presurvey");
@@ -1481,7 +1481,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     $("presurvey-continue-btn").disabled = !allSurveyQuestionsAnswered(presurveyRoot, state.preSurvey);
   });
   $("presurvey-continue-btn").addEventListener("click", function () {
-    showScreen("screen-tutorial-example");
+    showScreen("screen-tutorial");
   });
   $("tutorial-example-continue-btn").addEventListener("click", function () {
     showBlockIntro(0);
