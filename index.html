@@ -911,6 +911,46 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       </div>
     </div>
 
+    <p>We're also considering giving annotators an automated starting mask (an AI-generated pre-segmentation) in a future version, instead of always starting from a blank canvas. This task didn't have that, so these are about a hypothetical future version too.</p>
+
+    <div class="survey-q">
+      <div class="label">If a future version gave you an automated starting mask that you could accept, edit, or redraw from scratch, would that help you?</div>
+      <div class="seg" data-question="autoMaskHelpful">
+        <button data-value="yes">Yes</button>
+        <button data-value="no">No</button>
+        <button data-value="unsure">Not sure</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">If an automated starting mask were offered, how would you want to use it?</div>
+      <div class="seg wrap" data-question="autoMaskUsageStyle">
+        <button data-value="acceptAsIs">Accept it as-is when it looks right</button>
+        <button data-value="editAsStartingPoint">Use it as a starting point and edit it</button>
+        <button data-value="onlyAsReference">Only look at it for reference, draw my own</button>
+        <button data-value="ignoreEntirely">Ignore it and draw from scratch anyway</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">How much would you trust an automated starting mask without carefully checking it yourself?</div>
+      <div class="seg wrap" data-question="autoMaskTrust">
+        <button data-value="fullyTrust">Fully, I'd rarely double-check it</button>
+        <button data-value="checkKeyParts">Mostly, but I'd check the tricky parts</button>
+        <button data-value="alwaysVerify">Not much, I'd always verify it carefully</button>
+        <button data-value="notAtAll">Not at all</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
+      <div class="label">Do you think relying on an automated starting mask might make annotators less careful, for example accepting it without close inspection?</div>
+      <div class="seg" data-question="autoMaskCarelessnessConcern">
+        <button data-value="yes">Yes</button>
+        <button data-value="no">No</button>
+        <button data-value="unsure">Not sure</button>
+      </div>
+    </div>
+
     <button class="primary" id="futuresurvey-continue-btn" disabled>See my results &rarr;</button>
   </div>
 </div>
