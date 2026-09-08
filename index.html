@@ -168,11 +168,7 @@ input[type="text"]:focus-visible { outline: 2px solid var(--accent); outline-off
   max-width: 520px;
   margin: 0 auto;
 }
-#tutorial-worked-example {
-  grid-template-columns: 1fr;
-  max-width: 260px;
-}
-#screen-tutorial .name-wrap p { max-width: none; }
+#screen-tutorial .name-wrap p, #screen-tutorial-example .name-wrap p { max-width: none; }
 .tutorial-example figure {
   margin: 0;
   border: 1px solid var(--line);
@@ -591,7 +587,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   <div class="name-wrap">
     <div class="label kicker">Right before you start</div>
     <h1>Example: a finished annotation</h1>
-    <p>Here is what a correctly traced boundary looks like on one of the photos from before, for reference only, not something to copy exactly since every patch is different. This is the exercise: an outline that follows the true edge of the object as closely as you can manage.</p>
+    <p>Here is what a correctly traced boundary looks like on each of the two photos from before, one for pathology and one for dermoscopy, for reference only, not something to copy exactly since every patch is different. This is the exercise for both domains: an outline that follows the true edge of the object as closely as you can manage.</p>
     <div class="tutorial-examples" id="tutorial-worked-example"></div>
 
     <div class="label kicker" style="margin-top:8px;">Try it yourself</div>
@@ -1293,11 +1289,12 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   })();
   (function renderWorkedExample() {
     var root = $("tutorial-worked-example");
-    var ex = TUTORIAL_EXAMPLES[0];
-    var fig = document.createElement("figure");
-    fig.className = "tutorial-example";
-    fig.innerHTML = '<img src="' + ex.image_with_gt + '" alt="Correctly traced ' + ex.label + '"><figcaption>' + ex.label + ', correctly traced</figcaption>';
-    root.appendChild(fig);
+    TUTORIAL_EXAMPLES.forEach(function (ex) {
+      var fig = document.createElement("figure");
+      fig.className = "tutorial-example";
+      fig.innerHTML = '<img src="' + ex.image_with_gt + '" alt="Correctly traced ' + ex.label + '"><figcaption>' + ex.label + ', correctly traced</figcaption>';
+      root.appendChild(fig);
+    });
   })();
 
   // Practice canvas on the tutorial screen -- a real, working brush/lasso
