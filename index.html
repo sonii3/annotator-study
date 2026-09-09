@@ -507,11 +507,11 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       <div class="label kicker" style="margin-bottom:8px;">How this study is structured</div>
       <ol class="study-structure">
         <li>A few quick personal questions.</li>
-        <li>A few more quick questions before you start.</li>
+        <li>More questions of your experience before you start.</li>
         <li>What you'll be looking at: two example photos.</li>
-        <li>A worked example and a practice canvas, right before the real task, no scoring.</li>
-        <li>Block 1: 12 patches, at one pace, careful or rushed.</li>
-        <li>Block 2: the other 12 patches, at the other pace.</li>
+        <li>Short tutorial and a practice canvas, right before the real task, no scoring.</li>
+        <li>Block 1: 12 patches, at one pace.</li>
+        <li>Block 2: the other 12 patches, as long as you need.</li>
         <li>A short survey about the task.</li>
         <li>One more question, for a possible future study.</li>
         <li>Your results: press the email button, then attach the downloaded results file and send it.</li>
@@ -784,7 +784,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     </div>
 
     <div class="survey-q">
-      <div class="label">Which type of boundary error did you find hardest to notice or fix with confidence?</div>
+      <div class="label">Which type of boundary mistake do you think you were most likely to make yourself while drawing?</div>
       <div class="seg wrap" data-question="hardestErrorType">
         <button data-value="erosion">Mask too small (missing part of the object)</button>
         <button data-value="dilation">Mask too large (spilling past the true edge)</button>
@@ -884,6 +884,15 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     </div>
 
     <div class="survey-q">
+      <div class="label">Have you used a "game with a purpose" before, where playing also produces useful data or labels (examples: Foldit, Zooniverse, Duolingo)?</div>
+      <div class="seg" data-question="gwapFamiliarity">
+        <button data-value="yes">Yes</button>
+        <button data-value="no">No</button>
+        <button data-value="unsure">Not sure</button>
+      </div>
+    </div>
+
+    <div class="survey-q">
       <div class="label">If a future version showed live feedback on your score, when would you want to see it?</div>
       <div class="seg wrap" data-question="feedbackTiming">
         <button data-value="afterEachPatch">After every patch</button>
@@ -911,6 +920,14 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       </div>
     </div>
 
+    <button class="primary" id="futuresurvey-continue-btn" disabled>Continue &rarr;</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-futuresurvey-automask">
+  <div class="name-wrap">
+    <div class="label kicker">One more thing</div>
+    <h1>An automated starting mask</h1>
     <p>We're also considering giving annotators an automated starting mask (an AI-generated pre-segmentation) in a future version, instead of always starting from a blank canvas. This task didn't have that, so these are about a hypothetical future version too.</p>
 
     <div class="survey-q">
@@ -951,7 +968,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       </div>
     </div>
 
-    <button class="primary" id="futuresurvey-continue-btn" disabled>See my results &rarr;</button>
+    <button class="primary" id="futuresurvey-automask-continue-btn" disabled>See my results &rarr;</button>
   </div>
 </div>
 
@@ -1902,6 +1919,14 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     $("futuresurvey-continue-btn").disabled = !allSurveyQuestionsAnswered(futuresurveyRoot, state.futureSurvey);
   });
   $("futuresurvey-continue-btn").addEventListener("click", function () {
+    showScreen("screen-futuresurvey-automask");
+  });
+
+  var futuresurveyAutomaskRoot = $("screen-futuresurvey-automask");
+  bindSurveyQuestions(futuresurveyAutomaskRoot, function () { return state.futureSurvey; }, function () {
+    $("futuresurvey-automask-continue-btn").disabled = !allSurveyQuestionsAnswered(futuresurveyAutomaskRoot, state.futureSurvey);
+  });
+  $("futuresurvey-automask-continue-btn").addEventListener("click", function () {
     showSummary();
   });
 
@@ -2092,6 +2117,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     resetSurveyUI(presurveyRoot, "presurvey-continue-btn");
     resetSurveyUI(postsurveyRoot, "postsurvey-continue-btn");
     resetSurveyUI(futuresurveyRoot, "futuresurvey-continue-btn");
+    resetSurveyUI(futuresurveyAutomaskRoot, "futuresurvey-automask-continue-btn");
     state.preSurvey = {};
     $("name-input").value = "";
     showScreen("screen-welcome");
