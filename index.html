@@ -529,7 +529,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   <div class="name-wrap">
     <div class="label kicker">Personal information</div>
     <h1>Who's at the bench?</h1>
-    <input type="text" id="name-input" placeholder="Type your name" maxlength="30" />
+    <input type="text" id="name-input" placeholder="First and last name" maxlength="60" />
 
     <div class="survey-q">
       <div class="label">What is your professional or academic background?</div>
@@ -1142,13 +1142,18 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   // Fixed counterbalance per annotator_study/STUDY_PROTOCOL.md section 5 --
   // half the roster does careful-then-rushed, half rushed-then-careful, so
   // block order itself doesn't confound the effort manipulation with
-  // fatigue/practice effects. Unknown/typed-in names fall back to a
-  // deterministic hash so a re-run under the same name is stable, rather
-  // than defaulting everyone un-listed to the same order. This hash
-  // fallback is only actually used in Artifact/pilot mode (SERVER_MODE
-  // false) or if the server call below fails -- in server-mode, the
-  // real assignment comes from /api/assign-order, which tracks true
-  // counts server-side instead of hoping ~30 arbitrary names hash evenly.
+  // fatigue/practice effects. The four named pilot testers below keep an
+  // exact, pre-assigned 2/2 split. Everyone else (the real, not-yet-known
+  // annotator roster) gets a true random per-session assignment instead of
+  // a deterministic name hash (2026-09-10) -- a name hash meant two people
+  // who happen to type the same name always got the same order, an
+  // uncontrolled and undetectable source of imbalance. True randomization
+  // doesn't guarantee an exact split at any given N, but it removes that
+  // specific bias; the realized split should be counted from the exported
+  // data's blockOrder field once real recruitment is done and reported in
+  // the paper. In server-mode only (annotator_study/server/app.py), the
+  // real assignment instead comes from /api/assign-order, which tracks
+  // true running counts server-side and self-corrects exactly.
   var COUNTERBALANCE = {
     "Sonja": ["careful", "rushed"],
     "Paula": ["rushed", "careful"],
@@ -1170,14 +1175,13 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   };
   function conditionOrderFor(name) {
     if (COUNTERBALANCE[name]) return COUNTERBALANCE[name];
-    var h = 0;
-    for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-    return h % 2 === 0 ? ["careful", "rushed"] : ["rushed", "careful"];
+    return Math.random() < 0.5 ? ["careful", "rushed"] : ["rushed", "careful"];
   }
 
   var state = {
     name: "",
     sessionUid: "",
+    blockOrder: [],
     order: [],
     conditions: [],
     blockIndex: -1,
@@ -1473,6 +1477,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   })();
 
   function beginRunWithOrder(condOrder) {
+    state.blockOrder = condOrder;
     state.order = shuffle(PATCHES);
     state.conditions = [];
     for (var i = 0; i < state.order.length; i++) {
@@ -1989,6 +1994,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     return {
       sessionUid: state.sessionUid,
       name: state.name,
+      blockOrder: state.blockOrder,
       timestamp: new Date().toISOString(),
       totalPoints: state.points,
       avgDice: state.results.reduce(function (s, r) { return s + r.dice; }, 0) / state.results.length,
