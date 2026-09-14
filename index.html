@@ -1332,8 +1332,15 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   $("name-input").addEventListener("input", updateStartBtnState);
   bindSurveyQuestions(nameSurveyRoot, function () { return state.preSurvey; }, updateStartBtnState);
   function showBlockIntro(blockIdx) {
-    var condOrder = conditionOrderFor(state.name);
-    var cond = condOrder[blockIdx];
+    // Must reuse the order already assigned in beginRunWithOrder, not
+    // recompute it -- conditionOrderFor() is a true random draw per call
+    // since 2026-09-10 (no longer a deterministic name hash), so calling
+    // it again here independently re-rolled the order for each block,
+    // sometimes showing the same "Work carefully"/"Work quickly" text for
+    // both blocks while the real per-patch condition array (state.conditions,
+    // set once at session start) stayed correct underneath -- the intro
+    // screen just displayed the wrong instruction.
+    var cond = state.blockOrder[blockIdx];
     var copy = CONDITION_COPY[cond];
     state.blockIndex = blockIdx;
     state._pendingCondition = cond;
