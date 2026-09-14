@@ -279,8 +279,9 @@ input[type="text"]:focus-visible { outline: 2px solid var(--accent); outline-off
   height: 100%;
 }
 .canvas-stage canvas#imgCanvas { z-index: 1; }
-.canvas-stage canvas#maskCanvas { z-index: 2; cursor: crosshair; }
-.canvas-stage canvas#lassoPreviewCanvas { z-index: 3; pointer-events: none; }
+.canvas-stage canvas#autoMaskCanvas { z-index: 2; pointer-events: none; }
+.canvas-stage canvas#maskCanvas { z-index: 3; cursor: crosshair; }
+.canvas-stage canvas#lassoPreviewCanvas { z-index: 4; pointer-events: none; }
 .canvas-stage canvas#practiceImgCanvasA, .canvas-stage canvas#practiceImgCanvasB { z-index: 1; }
 .canvas-stage canvas#practiceMaskCanvasA, .canvas-stage canvas#practiceMaskCanvasB { z-index: 2; cursor: crosshair; }
 .canvas-stage canvas#practiceLassoPreviewCanvasA, .canvas-stage canvas#practiceLassoPreviewCanvasB { z-index: 3; pointer-events: none; }
@@ -1006,6 +1007,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       <div class="specimen-tag mono" id="specimen-id">SPEC-000</div>
       <div class="canvas-stage">
         <canvas id="imgCanvas" width="256" height="256"></canvas>
+        <canvas id="autoMaskCanvas" width="256" height="256"></canvas>
         <canvas id="maskCanvas" width="256" height="256"></canvas>
         <canvas id="lassoPreviewCanvas" width="256" height="256"></canvas>
       </div>
@@ -1576,8 +1578,10 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   // ---------------- canvas setup ----------------
   var imgCanvas = $("imgCanvas");
   var maskCanvas = $("maskCanvas");
+  var autoMaskCanvas = $("autoMaskCanvas");
   var imgCtx = imgCanvas.getContext("2d");
   var maskCtx = maskCanvas.getContext("2d");
+  var autoMaskCtx = autoMaskCanvas.getContext("2d");
   var W = imgCanvas.width, H = imgCanvas.height;
 
   function loadImageToCanvas(dataUri, ctx, cb) {
@@ -1599,46 +1603,42 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     return bin;
   }
 
-  function paintMaskFromBinary(bin) {
-    var img = maskCtx.createImageData(W, H);
+  // Real provenance, not a location guess: the automated suggestion lives
+  // on its own canvas layer (autoMaskCanvas, stacked below maskCanvas),
+  // painted only by hint-btn and cleared only by remove-hint-btn or a new
+  // patch. Hand strokes only ever touch maskCanvas. Stacking, not per-pixel
+  // classification, is what makes the two colors correct: a hand stroke
+  // drawn over the automated area visually covers it (hand takes priority),
+  // and removing the automated mask can never erase hand-drawn content
+  // because it only clears the other layer. An earlier version classified
+  // color by whether a pixel's location overlapped the candidate's
+  // footprint, which both showed the automated color on purely hand-drawn
+  // pixels that happened to land there (before the automated mask was ever
+  // loaded) and let "remove automated mask" wipe out hand-drawn pixels in
+  // that same footprint -- both reported as real bugs, fixed by this layering.
+  function paintAutoMaskFromBinary(bin) {
+    var img = autoMaskCtx.createImageData(W, H);
     for (var i = 0; i < W * H; i++) {
-      var on = bin[i] === 1;
-      img.data[i * 4] = HAND_MASK_RGB[0];
-      img.data[i * 4 + 1] = HAND_MASK_RGB[1];
-      img.data[i * 4 + 2] = HAND_MASK_RGB[2];
-      img.data[i * 4 + 3] = on ? MASK_ALPHA : 0;
-    }
-    maskCtx.putImageData(img, 0, 0);
-  }
-
-  function currentMaskBinary() {
-    var data = maskCtx.getImageData(0, 0, W, H).data;
-    var bin = new Uint8Array(W * H);
-    for (var i = 0; i < W * H; i++) bin[i] = data[i * 4 + 3] > 40 ? 1 : 0;
-    return bin;
-  }
-
-  // Recolors the mask by origin -- automated-suggested pixels (still
-  // overlapping the candidate mask's footprint) get AUTO_MASK_RGB, purely
-  // hand-drawn pixels (outside that footprint) keep HAND_MASK_RGB. Purely
-  // a display aid so an annotator can see what the merge actually did;
-  // does not touch the underlying binary mask (currentMaskBinary()/export
-  // only ever look at alpha, never at these RGB values), and is a no-op
-  // until the automated mask has actually been loaded at least once for
-  // this patch, so a plain hand-drawn mask always looks the same as before.
-  function recolorMaskByOrigin() {
-    if (!state.usedHint || !state.candidateBin) return;
-    var bin = currentMaskBinary();
-    var img = maskCtx.createImageData(W, H);
-    for (var i = 0; i < bin.length; i++) {
       if (!bin[i]) continue;
-      var rgb = state.candidateBin[i] ? AUTO_MASK_RGB : HAND_MASK_RGB;
-      img.data[i * 4] = rgb[0];
-      img.data[i * 4 + 1] = rgb[1];
-      img.data[i * 4 + 2] = rgb[2];
+      img.data[i * 4] = AUTO_MASK_RGB[0];
+      img.data[i * 4 + 1] = AUTO_MASK_RGB[1];
+      img.data[i * 4 + 2] = AUTO_MASK_RGB[2];
       img.data[i * 4 + 3] = MASK_ALPHA;
     }
-    maskCtx.putImageData(img, 0, 0);
+    autoMaskCtx.putImageData(img, 0, 0);
+  }
+
+  // The real, scored mask is the union of both layers -- automated
+  // suggestions still on autoMaskCanvas plus whatever's hand-drawn on
+  // maskCanvas -- never just one of them.
+  function currentMaskBinary() {
+    var handData = maskCtx.getImageData(0, 0, W, H).data;
+    var autoData = autoMaskCtx.getImageData(0, 0, W, H).data;
+    var bin = new Uint8Array(W * H);
+    for (var i = 0; i < W * H; i++) {
+      bin[i] = (handData[i * 4 + 3] > 40 || autoData[i * 4 + 3] > 40) ? 1 : 0;
+    }
+    return bin;
   }
 
   // Encodes a binary mask (0/1 per pixel, same convention as the rest of
@@ -1660,39 +1660,40 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   }
 
   function pushUndo() {
-    state.undoStack.push(maskCtx.getImageData(0, 0, W, H));
+    state.undoStack.push({
+      hand: maskCtx.getImageData(0, 0, W, H),
+      auto: autoMaskCtx.getImageData(0, 0, W, H)
+    });
     if (state.undoStack.length > 25) state.undoStack.shift();
   }
   $("undo-btn").addEventListener("click", function () {
-    if (state.undoStack.length) maskCtx.putImageData(state.undoStack.pop(), 0, 0);
+    if (!state.undoStack.length) return;
+    var snap = state.undoStack.pop();
+    maskCtx.putImageData(snap.hand, 0, 0);
+    autoMaskCtx.putImageData(snap.auto, 0, 0);
   });
   $("reset-btn").addEventListener("click", function () {
     pushUndo();
     maskCtx.clearRect(0, 0, W, H);
+    autoMaskCtx.clearRect(0, 0, W, H);
   });
   $("hint-btn").addEventListener("click", function () {
     if (!state.candidateBin) return;
     pushUndo();
-    // Union with whatever's already drawn, not a full replace -- an
-    // annotator who already made progress by hand shouldn't lose it just
-    // for also loading the automated mask.
-    var mine = currentMaskBinary();
-    var merged = new Uint8Array(mine.length);
-    for (var i = 0; i < mine.length; i++) merged[i] = (mine[i] || state.candidateBin[i]) ? 1 : 0;
-    paintMaskFromBinary(merged);
+    // Paints the automated suggestion onto its own layer, never touching
+    // the hand-drawn layer at all, so anything already drawn by hand is
+    // completely unaffected regardless of where it overlaps.
+    paintAutoMaskFromBinary(state.candidateBin);
     state.usedHint = true;
-    recolorMaskByOrigin();
     $("hint-color-legend").style.display = "flex";
   });
   $("remove-hint-btn").addEventListener("click", function () {
-    if (!state.candidateBin) return;
     pushUndo();
-    // Subtracts exactly the automated mask's footprint, leaving any
-    // hand-drawn strokes elsewhere untouched.
-    var mine = currentMaskBinary();
-    var without = new Uint8Array(mine.length);
-    for (var i = 0; i < mine.length; i++) without[i] = (mine[i] && !state.candidateBin[i]) ? 1 : 0;
-    paintMaskFromBinary(without);
+    // Clears only the automated layer. Hand-drawn content on maskCanvas,
+    // including any that happens to overlap where the automated mask was,
+    // is a completely separate layer and is never touched by this.
+    autoMaskCtx.clearRect(0, 0, W, H);
+    $("hint-color-legend").style.display = "none";
   });
 
   // ---------------- drawing ----------------
@@ -1704,13 +1705,26 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   }
   function setComposite() {
     maskCtx.globalCompositeOperation = state.action === "erase" ? "destination-out" : "source-over";
-    maskCtx.fillStyle = "rgba(" + (191) + "," + 53 + "," + 104 + "," + (MASK_ALPHA / 255) + ")";
+    maskCtx.fillStyle = "rgba(" + HAND_MASK_RGB[0] + "," + HAND_MASK_RGB[1] + "," + HAND_MASK_RGB[2] + "," + (MASK_ALPHA / 255) + ")";
     maskCtx.strokeStyle = maskCtx.fillStyle;
+    // Erasing removes whatever's currently shown at that spot regardless of
+    // layer, so it also punches through the automated-suggestion layer, not
+    // just the hand-drawn one. Adding never touches the automated layer,
+    // only hint-btn/remove-hint-btn do that.
+    if (state.action === "erase") {
+      autoMaskCtx.globalCompositeOperation = "destination-out";
+      autoMaskCtx.fillStyle = "rgba(0,0,0,1)";
+    }
   }
   function stampBrush(x, y) {
     maskCtx.beginPath();
     maskCtx.arc(x, y, state.brushSize / 2, 0, Math.PI * 2);
     maskCtx.fill();
+    if (state.action === "erase") {
+      autoMaskCtx.beginPath();
+      autoMaskCtx.arc(x, y, state.brushSize / 2, 0, Math.PI * 2);
+      autoMaskCtx.fill();
+    }
   }
   var lastPos = null;
   maskCanvas.addEventListener("pointerdown", function (evt) {
@@ -1737,7 +1751,6 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
         stampBrush(lastPos.x + (p.x - lastPos.x) * t, lastPos.y + (p.y - lastPos.y) * t);
       }
       lastPos = p;
-      recolorMaskByOrigin();
     } else {
       state.lassoPts.push(p);
       drawLassoPreview();
@@ -1753,7 +1766,13 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       for (var i = 1; i < state.lassoPts.length; i++) maskCtx.lineTo(state.lassoPts[i].x, state.lassoPts[i].y);
       maskCtx.closePath();
       maskCtx.fill();
-      recolorMaskByOrigin();
+      if (state.action === "erase") {
+        autoMaskCtx.beginPath();
+        autoMaskCtx.moveTo(state.lassoPts[0].x, state.lassoPts[0].y);
+        for (var j = 1; j < state.lassoPts.length; j++) autoMaskCtx.lineTo(state.lassoPts[j].x, state.lassoPts[j].y);
+        autoMaskCtx.closePath();
+        autoMaskCtx.fill();
+      }
     }
     state.lassoPts = [];
     lassoPreviewCtx.clearRect(0, 0, W, H);
@@ -1840,6 +1859,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     // load it onto the visible mask on request (state.usedHint tracks this
     // per patch and is exported alongside the result, see submit-btn).
     maskCtx.clearRect(0, 0, W, H);
+    autoMaskCtx.clearRect(0, 0, W, H);
+    $("hint-color-legend").style.display = "none";
     var offCand = document.createElement("canvas");
     offCand.width = W; offCand.height = H;
     loadImageToCanvas(p.candidate, offCand.getContext("2d"), function (im) {
