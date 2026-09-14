@@ -350,6 +350,11 @@ textarea {
 textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 input[type="range"] { width: 100%; accent-color: var(--accent); }
 .size-readout { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-soft); }
+.hint-color-legend { display: flex; gap: 14px; font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+.hint-color-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.hint-color-legend .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.hint-color-legend .swatch.hand { background: rgb(191, 53, 104); }
+.hint-color-legend .swatch.auto { background: rgb(37, 130, 196); }
 .submit-btn { width: 100%; padding: 12px; font-size: 15px; }
 .undo-row { display: flex; gap: 6px; }
 .undo-row button { flex: 1; }
@@ -367,6 +372,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 }
 .streak-badge svg { width: 14px; height: 14px; flex: none; }
 .streak-badge.hidden { display: none; }
+.hud-stat.hidden { display: none; }
 
 /* ---------- toast / result ---------- */
 .result-toast {
@@ -987,7 +993,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     <div class="hud-stat"><span class="label">Mode</span><span class="v mode-pill" id="hud-mode">-</span></div>
     <div class="hud-stat"><span class="label">Points</span><span class="v" id="hud-points">0</span></div>
     <div class="hud-stat"><span class="label">Streak</span><span class="v" id="hud-streak">0</span></div>
-    <div class="hud-stat"><span class="label">Elapsed</span><span class="v" id="hud-timer">0.0s</span></div>
+    <div class="hud-stat" id="hud-timer-stat"><span class="label">Elapsed</span><span class="v" id="hud-timer">0.0s</span></div>
     <div class="hud-progress">
       <div class="label" id="hud-progress-label">Patch 1 / 24</div>
       <div class="hud-progress-track"><div class="hud-progress-fill" id="hud-progress-fill" style="width:0%"></div></div>
@@ -1049,6 +1055,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
         <button id="hint-btn" disabled>Load automated mask</button>
         <button id="remove-hint-btn" disabled>Remove automated mask</button>
         <div class="size-readout"><span>Not able to annotate on your own? Load a rough automated mask and adjust it instead. This is recorded. Loading it keeps anything you already drew; removing it only takes the automated part back out.</span></div>
+        <div class="hint-color-legend" id="hint-color-legend" style="display:none;"><span><span class="swatch hand"></span>Your drawing</span><span><span class="swatch auto"></span>Automated suggestion</span></div>
       </div>
 
       <button class="primary submit-btn" id="submit-btn">Submit patch &rarr;</button>
@@ -1139,6 +1146,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   var GAMIFIED = JSON.parse(document.getElementById("gamified-mode-data").textContent);
   var CLEAN_MATCH_THRESHOLD = 0.85;
   var MASK_ALPHA = 210;
+  var HAND_MASK_RGB = [191, 53, 104];
+  var AUTO_MASK_RGB = [37, 130, 196];
 
   // Fixed counterbalance per annotator_study/STUDY_PROTOCOL.md section 5 --
   // half the roster does careful-then-rushed, half rushed-then-careful, so
@@ -1592,9 +1601,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     var img = maskCtx.createImageData(W, H);
     for (var i = 0; i < W * H; i++) {
       var on = bin[i] === 1;
-      img.data[i * 4] = 91;
-      img.data[i * 4 + 1] = 53;
-      img.data[i * 4 + 2] = 104;
+      img.data[i * 4] = HAND_MASK_RGB[0];
+      img.data[i * 4 + 1] = HAND_MASK_RGB[1];
+      img.data[i * 4 + 2] = HAND_MASK_RGB[2];
       img.data[i * 4 + 3] = on ? MASK_ALPHA : 0;
     }
     maskCtx.putImageData(img, 0, 0);
@@ -1605,6 +1614,29 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     var bin = new Uint8Array(W * H);
     for (var i = 0; i < W * H; i++) bin[i] = data[i * 4 + 3] > 40 ? 1 : 0;
     return bin;
+  }
+
+  // Recolors the mask by origin -- automated-suggested pixels (still
+  // overlapping the candidate mask's footprint) get AUTO_MASK_RGB, purely
+  // hand-drawn pixels (outside that footprint) keep HAND_MASK_RGB. Purely
+  // a display aid so an annotator can see what the merge actually did;
+  // does not touch the underlying binary mask (currentMaskBinary()/export
+  // only ever look at alpha, never at these RGB values), and is a no-op
+  // until the automated mask has actually been loaded at least once for
+  // this patch, so a plain hand-drawn mask always looks the same as before.
+  function recolorMaskByOrigin() {
+    if (!state.usedHint || !state.candidateBin) return;
+    var bin = currentMaskBinary();
+    var img = maskCtx.createImageData(W, H);
+    for (var i = 0; i < bin.length; i++) {
+      if (!bin[i]) continue;
+      var rgb = state.candidateBin[i] ? AUTO_MASK_RGB : HAND_MASK_RGB;
+      img.data[i * 4] = rgb[0];
+      img.data[i * 4 + 1] = rgb[1];
+      img.data[i * 4 + 2] = rgb[2];
+      img.data[i * 4 + 3] = MASK_ALPHA;
+    }
+    maskCtx.putImageData(img, 0, 0);
   }
 
   // Encodes a binary mask (0/1 per pixel, same convention as the rest of
@@ -1647,6 +1679,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     for (var i = 0; i < mine.length; i++) merged[i] = (mine[i] || state.candidateBin[i]) ? 1 : 0;
     paintMaskFromBinary(merged);
     state.usedHint = true;
+    recolorMaskByOrigin();
+    $("hint-color-legend").style.display = "flex";
   });
   $("remove-hint-btn").addEventListener("click", function () {
     if (!state.candidateBin) return;
@@ -1701,6 +1735,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
         stampBrush(lastPos.x + (p.x - lastPos.x) * t, lastPos.y + (p.y - lastPos.y) * t);
       }
       lastPos = p;
+      recolorMaskByOrigin();
     } else {
       state.lassoPts.push(p);
       drawLassoPreview();
@@ -1716,6 +1751,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       for (var i = 1; i < state.lassoPts.length; i++) maskCtx.lineTo(state.lassoPts[i].x, state.lassoPts[i].y);
       maskCtx.closePath();
       maskCtx.fill();
+      recolorMaskByOrigin();
     }
     state.lassoPts = [];
     lassoPreviewCtx.clearRect(0, 0, W, H);
@@ -1773,6 +1809,12 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     var modeEl = $("hud-mode");
     modeEl.textContent = cond === "careful" ? "Careful" : "Rushed";
     modeEl.className = "v mode-pill " + cond;
+    // Elapsed time is only shown during the rushed block. Showing a live
+    // ticking clock during the careful block, where the instruction is
+    // explicitly "take your time, no time limit," would work against the
+    // effort manipulation by nudging the annotator to watch the clock
+    // anyway. Actual seconds are still recorded either way (see submit-btn).
+    $("hud-timer-stat").classList.toggle("hidden", cond === "careful");
     state.undoStack = [];
 
     state.gtData = null;
@@ -1781,6 +1823,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     state.usedHint = false;
     $("hint-btn").disabled = true;
     $("remove-hint-btn").disabled = true;
+    $("hint-color-legend").style.display = "none";
     function maybeComputeStartDice() {
       if (state.gtData && state.candidateBin) {
         state.startDice = diceScore(state.candidateBin, state.gtData);
