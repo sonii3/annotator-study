@@ -373,6 +373,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .streak-badge svg { width: 14px; height: 14px; flex: none; }
 .streak-badge.hidden { display: none; }
 .hud-stat.hidden { display: none; }
+#hud-timer.time-over { color: var(--coral); }
 
 /* ---------- toast / result ---------- */
 .result-toast {
@@ -993,7 +994,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     <div class="hud-stat"><span class="label">Mode</span><span class="v mode-pill" id="hud-mode">-</span></div>
     <div class="hud-stat"><span class="label">Points</span><span class="v" id="hud-points">0</span></div>
     <div class="hud-stat"><span class="label">Streak</span><span class="v" id="hud-streak">0</span></div>
-    <div class="hud-stat" id="hud-timer-stat"><span class="label">Elapsed</span><span class="v" id="hud-timer">0.0s</span></div>
+    <div class="hud-stat" id="hud-timer-stat"><span class="label">Time left</span><span class="v" id="hud-timer">30.0s</span></div>
     <div class="hud-progress">
       <div class="label" id="hud-progress-label">Patch 1 / 24</div>
       <div class="hud-progress-track"><div class="hud-progress-fill" id="hud-progress-fill" style="width:0%"></div></div>
@@ -1148,6 +1149,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   var MASK_ALPHA = 210;
   var HAND_MASK_RGB = [191, 53, 104];
   var AUTO_MASK_RGB = [37, 130, 196];
+  var RUSHED_TARGET_SECONDS = 30;
 
   // Fixed counterbalance per annotator_study/STUDY_PROTOCOL.md section 5 --
   // half the roster does careful-then-rushed, half rushed-then-careful, so
@@ -1865,7 +1867,14 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     clearInterval(state.timerHandle);
     state.timerHandle = setInterval(function () {
       var s = (performance.now() - state.startTs) / 1000;
-      $("hud-timer").textContent = fmtSeconds(s);
+      // Rushed block: count down from the 30s target as a visible nudge,
+      // not a hard cutoff -- submit-btn still works at any time, before or
+      // after zero. The real recorded "seconds" (used for scoring/export)
+      // is always the actual elapsed time, never clamped by this display.
+      var timerEl = $("hud-timer");
+      var remaining = RUSHED_TARGET_SECONDS - s;
+      timerEl.textContent = fmtSeconds(Math.max(0, remaining));
+      timerEl.classList.toggle("time-over", remaining <= 0);
     }, 100);
   }
 
